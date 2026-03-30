@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Boolean, Text
+from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Boolean, Text, UniqueConstraint
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
 from app.enums import ApplicationStatus
@@ -43,64 +43,17 @@ class Application(Base):
 
     id = Column(Integer, primary_key=True)
     position = Column(String(100), nullable=False)
-
-    status = Column(
-        Enum(ApplicationStatus),
-        default=ApplicationStatus.APPLIED,
-        nullable=False
-    )
-
+    status = Column(Enum(ApplicationStatus), default=ApplicationStatus.APPLIED, nullable=False)
     applied_date = Column(DateTime, server_default=func.now(), nullable=False)
     interview_date = Column(DateTime, nullable=True)
-
     created_at = Column(DateTime, server_default=func.now(), nullable=False)
     updated_at = Column(DateTime, onupdate=func.now())
+    company_id = Column(Integer, ForeignKey("companies.id", ondelete="CASCADE"), nullable=False, index=True)
+    user_id = Column(Integer, ForeignKey("users.id", ondelete="CASCADE"), nullable=False, index=True)
 
-    company_id = Column(
-        Integer,
-        ForeignKey("companies.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-    user_id = Column(
-        Integer,
-        ForeignKey("users.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
+    company = relationship("Company", back_populates="applications")
+    user = relationship("User", back_populates="applications")
 
-    company = relationship(
-        "Company",
-        back_populates="applications",
-    )
-    user = relationship(
-        "User",
-        back_populates="applications",
-    )
-    notes = relationship(
-        "Note",
-        back_populates="application",
-        cascade="all, delete-orphan",
-    )
-
-
-class Note(Base):
-    __tablename__ = "notes"
-
-    id = Column(Integer, primary_key=True)
-    content = Column(Text, nullable=False)
-
-    created_at = Column(DateTime, server_default=func.now(), nullable=False)
-    updated_at = Column(DateTime, onupdate=func.now())
-
-    application_id = Column(
-        Integer,
-        ForeignKey("applications.id", ondelete="CASCADE"),
-        nullable=False,
-        index=True
-    )
-
-    application = relationship(
-        "Application",
-        back_populates="notes",
+    __table_args__ = (
+        UniqueConstraint("user_id", "company_id", name="uq_user_company"),
     )
