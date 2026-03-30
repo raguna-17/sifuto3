@@ -48,7 +48,7 @@ async def create_application(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return await create_user_application(
+    return await application_service.create_user_application(
         company_data={
             "name": payload.company_name,
             "industry": payload.industry
