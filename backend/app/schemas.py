@@ -16,36 +16,13 @@ class UserRead(UserBase):
     id: int
     is_active: bool
     created_at: datetime
+
     model_config = ConfigDict(from_attributes=True)
 
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
 
-# -----------------
-# Forward referenceのための仮宣言
-# -----------------
-class CompanyRead(BaseModel):
-    pass
-
-# -----------------
-# Application
-# -----------------
-class ApplicationBase(BaseModel):
-    position: str = Field(max_length=100)
-    applied_date: Optional[datetime] = None
-    interview_date: Optional[datetime] = None
-
-class ApplicationCreate(ApplicationBase):
-    company_id: int  # 会社IDをフロントから送信
-    status: ApplicationStatus = ApplicationStatus.APPLIED
-
-class ApplicationRead(ApplicationBase):
-    id: int
-    status: ApplicationStatus
-    created_at: datetime
-    company: CompanyRead  # 応募済み企業情報を返す
-    model_config = ConfigDict(from_attributes=True)
 
 # -----------------
 # Company
@@ -60,8 +37,28 @@ class CompanyCreate(CompanyBase):
 class CompanyRead(CompanyBase):
     id: int
     created_at: datetime
-    applications: List[ApplicationRead] = Field(default_factory=list)
+
     model_config = ConfigDict(from_attributes=True)
 
-# Forward reference更新
-ApplicationRead.model_rebuild()
+
+# -----------------
+# Application
+# -----------------
+class ApplicationBase(BaseModel):
+    position: str = Field(max_length=100)
+    applied_date: Optional[datetime] = None
+    interview_date: Optional[datetime] = None
+
+class ApplicationCreate(ApplicationBase):
+    company_id: int
+    status: ApplicationStatus = ApplicationStatus.APPLIED
+
+class ApplicationRead(ApplicationBase):
+    id: int
+    status: ApplicationStatus
+    created_at: datetime
+
+    # 👇 ここで会社情報をネスト
+    company: CompanyRead
+
+    model_config = ConfigDict(from_attributes=True)
