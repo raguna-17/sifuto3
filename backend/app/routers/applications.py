@@ -42,22 +42,18 @@ async def get_application(
 # -----------------
 # 応募作成（会社名＋業界＋ポジションで送信）
 # -----------------
-@router.post("/", response_model=ApplicationRead, status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=201)
 async def create_application(
-    company_name: str,
-    industry: str | None = None,
-    position: str = None,
+    payload: ApplicationCreateRequest,
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    if not company_name or not position:
-        raise HTTPException(status_code=400, detail="Company name and position are required")
-
-    company_data = {"name": company_name, "industry": industry}
-
-    return await application_service.create_user_application(
-        company_data=company_data,
-        position=position,
+    return await create_user_application(
+        company_data={
+            "name": payload.company_name,
+            "industry": payload.industry
+        },
+        position=payload.position,
         db=db,
         current_user=current_user
     )
