@@ -57,7 +57,6 @@ class ApplicationBase(BaseModel):
 
 
 class ApplicationCreate(BaseModel):
-    position: str = Field(max_length=100)  # ← 追加
     company_id: int
     status: ApplicationStatus = ApplicationStatus.APPLIED
 
