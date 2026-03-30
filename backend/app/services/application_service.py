@@ -1,18 +1,23 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.future import select
 from app.models import Application
+from sqlalchemy.orm import selectinload
 
 
 async def get_user_applications(db: AsyncSession, user_id: int):
     result = await db.execute(
-        select(Application).where(Application.user_id == user_id)
+        select(Application)
+        .options(selectinload(Application.notes))  # ← ここ
+        .where(Application.user_id == user_id)
     )
     return result.scalars().all()
 
 
 async def get_user_application(db: AsyncSession, user_id: int, application_id: int):
     result = await db.execute(
-        select(Application).where(
+        select(Application)
+        .options(selectinload(Application.notes))  # ← 追加
+        .where(
             Application.id == application_id,
             Application.user_id == user_id
         )
