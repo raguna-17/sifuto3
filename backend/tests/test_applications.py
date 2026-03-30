@@ -74,7 +74,7 @@ async def test_delete_application_not_found(client, auth_headers):
     assert res.status_code == 404
 
 
-# ===== 認証系チE��チE=====
+# ===== 認証系チE��チE=====
 
 async def test_invalid_token(client):
     headers = {"Authorization": "Bearer invalid.token"}
@@ -87,7 +87,7 @@ async def test_invalid_token(client):
 async def test_token_without_sub(client):
     from app.auth import create_access_token
 
-    token = create_access_token({})
+    token = create_access_token(0)  # dummy
     headers = {"Authorization": f"Bearer {token}"}
 
     res = await client.get(f"{BASE_URL}/", headers=headers)
