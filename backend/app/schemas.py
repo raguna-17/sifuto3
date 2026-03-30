@@ -28,8 +28,8 @@ class UserLogin(BaseModel):
 # Company
 # -----------------
 class CompanyBase(BaseModel):
-    name: str = Field(max_length=100)
-    industry: Optional[str] = Field(default=None, max_length=100)
+    name: str = Field(min_length=1,max_length=100)
+    industry: Optional[str] = Field(default=None,min_length=1, max_length=100)
 
 class CompanyCreate(CompanyBase):
     pass
