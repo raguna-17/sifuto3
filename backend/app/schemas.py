@@ -56,7 +56,7 @@ class ApplicationBase(BaseModel):
     interview_date: Optional[datetime] = None
 
 
-class ApplicationCreate(BaseModel):
+class ApplicationCreate(ApplicationBase):
     company_id: int
     status: ApplicationStatus = ApplicationStatus.APPLIED
 
