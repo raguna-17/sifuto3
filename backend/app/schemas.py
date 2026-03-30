@@ -69,14 +69,6 @@ class ApplicationRead(ApplicationBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# 軽量版（ネスト爆発防止）
-class ApplicationSimple(BaseModel):
-    id: int
-    position: str
-
-    model_config = ConfigDict(from_attributes=True)
-
-
 # -----------------
 # Company
 # -----------------
