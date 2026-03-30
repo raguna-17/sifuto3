@@ -1,8 +1,8 @@
 """init
 
-Revision ID: 6746e1c18264
+Revision ID: bd279cd3f197
 Revises: 
-Create Date: 2026-03-19 13:34:31.550591
+Create Date: 2026-03-30 02:13:44.067423
 
 """
 from typing import Sequence, Union
@@ -12,7 +12,7 @@ import sqlalchemy as sa
 
 
 # revision identifiers, used by Alembic.
-revision: str = '6746e1c18264'
+revision: str = 'bd279cd3f197'
 down_revision: Union[str, Sequence[str], None] = None
 branch_labels: Union[str, Sequence[str], None] = None
 depends_on: Union[str, Sequence[str], None] = None
@@ -25,7 +25,8 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('name', sa.String(length=100), nullable=False),
     sa.Column('industry', sa.String(length=100), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('name')
     )
@@ -33,18 +34,20 @@ def upgrade() -> None:
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('email', sa.String(length=255), nullable=False),
     sa.Column('hashed_password', sa.String(length=255), nullable=False),
-    sa.Column('is_active', sa.Boolean(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('is_active', sa.Boolean(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.PrimaryKeyConstraint('id')
     )
     op.create_index(op.f('ix_users_email'), 'users', ['email'], unique=True)
     op.create_table('applications',
     sa.Column('id', sa.Integer(), nullable=False),
     sa.Column('position', sa.String(length=100), nullable=False),
-    sa.Column('status', sa.Enum('APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED', name='applicationstatus', native_enum=False), server_default='applied', nullable=True),
-    sa.Column('applied_date', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('status', sa.Enum('APPLIED', 'INTERVIEW', 'OFFER', 'REJECTED', name='applicationstatus'), nullable=False),
+    sa.Column('applied_date', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
     sa.Column('interview_date', sa.DateTime(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('company_id', sa.Integer(), nullable=False),
     sa.Column('user_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['company_id'], ['companies.id'], ondelete='CASCADE'),
@@ -55,8 +58,9 @@ def upgrade() -> None:
     op.create_index(op.f('ix_applications_user_id'), 'applications', ['user_id'], unique=False)
     op.create_table('notes',
     sa.Column('id', sa.Integer(), nullable=False),
-    sa.Column('content', sa.Text(), nullable=True),
-    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=True),
+    sa.Column('content', sa.Text(), nullable=False),
+    sa.Column('created_at', sa.DateTime(), server_default=sa.text('now()'), nullable=False),
+    sa.Column('updated_at', sa.DateTime(), nullable=True),
     sa.Column('application_id', sa.Integer(), nullable=False),
     sa.ForeignKeyConstraint(['application_id'], ['applications.id'], ondelete='CASCADE'),
     sa.PrimaryKeyConstraint('id')
