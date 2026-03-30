@@ -1,7 +1,7 @@
 from sqlalchemy import Column, Integer, String, DateTime, Enum, ForeignKey, Boolean, Text
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
+from app.enums import ApplicationStatus
 from app.db import Base
 
 
@@ -11,22 +11,15 @@ class User(Base):
     id = Column(Integer, primary_key=True)
     email = Column(String(255), unique=True, nullable=False, index=True)
     hashed_password = Column(String(255), nullable=False)
-    is_active = Column(Boolean, default=True)
-    created_at = Column(DateTime, server_default=func.now())
+    is_active = Column(Boolean, default=True, nullable=False)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, onupdate=func.now())
 
     applications = relationship(
         "Application",
         back_populates="user",
         cascade="all, delete-orphan",
-        lazy="selectin"
     )
-
-
-class ApplicationStatus(str, enum.Enum):
-    APPLIED = "applied"
-    INTERVIEW = "interview"
-    OFFER = "offer"
-    REJECTED = "rejected"
 
 
 class Company(Base):
@@ -34,14 +27,14 @@ class Company(Base):
 
     id = Column(Integer, primary_key=True)
     name = Column(String(100), nullable=False, unique=True)
-    industry = Column(String(100))
-    created_at = Column(DateTime, server_default=func.now())
+    industry = Column(String(100), nullable=True)
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, onupdate=func.now())
 
     applications = relationship(
         "Application",
         back_populates="company",
         cascade="all, delete-orphan",
-        lazy="selectin"
     )
 
 
@@ -50,17 +43,18 @@ class Application(Base):
 
     id = Column(Integer, primary_key=True)
     position = Column(String(100), nullable=False)
+
     status = Column(
-        Enum(
-            ApplicationStatus,
-            native_enum=False,
-            values_callable=lambda obj: [e.value for e in obj]
-        ),
-        server_default="applied"
+        Enum(ApplicationStatus),
+        default=ApplicationStatus.APPLIED,
+        nullable=False
     )
-    applied_date = Column(DateTime, server_default=func.now())
+
+    applied_date = Column(DateTime, server_default=func.now(), nullable=False)
     interview_date = Column(DateTime, nullable=True)
-    created_at = Column(DateTime, server_default=func.now())
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, onupdate=func.now())
 
     company_id = Column(
         Integer,
@@ -78,19 +72,15 @@ class Application(Base):
     company = relationship(
         "Company",
         back_populates="applications",
-        lazy="selectin"
     )
     user = relationship(
         "User",
         back_populates="applications",
-        lazy="selectin"
     )
-
     notes = relationship(
         "Note",
         back_populates="application",
         cascade="all, delete-orphan",
-        lazy="selectin"
     )
 
 
@@ -98,8 +88,10 @@ class Note(Base):
     __tablename__ = "notes"
 
     id = Column(Integer, primary_key=True)
-    content = Column(Text)
-    created_at = Column(DateTime, server_default=func.now())
+    content = Column(Text, nullable=False)
+
+    created_at = Column(DateTime, server_default=func.now(), nullable=False)
+    updated_at = Column(DateTime, onupdate=func.now())
 
     application_id = Column(
         Integer,
@@ -111,5 +103,4 @@ class Note(Base):
     application = relationship(
         "Application",
         back_populates="notes",
-        lazy="selectin"
     )

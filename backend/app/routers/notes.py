@@ -1,69 +1,72 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.future import select
 from typing import List
 
 from app.db import get_db
-from app.models import Note, Application, User
-from app.schemas import NoteRead, ApplicationRead,NoteCreate
+from app.models import User
+from app.schemas import NoteRead, NoteCreate
 from app.auth import get_current_user
-from pydantic import BaseModel, Field
+from app.services import note_service
 
 router = APIRouter(prefix="/api/v1/notes", tags=["notes"])
 
 
-
 @router.get("/", response_model=List[NoteRead])
-async def get_my_notes(current_user: User = Depends(get_current_user),
-                       db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Note).join(Application).where(Application.user_id == current_user.id)
-    )
-    return result.scalars().all()
+async def get_my_notes(
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    return await note_service.get_user_notes(db, current_user.id)
+
 
 @router.get("/{note_id}", response_model=NoteRead)
-async def get_note(note_id: int, current_user: User = Depends(get_current_user),
-                   db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Note).join(Application).where(Note.id == note_id,
-                                            Application.user_id == current_user.id)
-    )
-    note = result.scalars().first()
+async def get_note(
+    note_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    note = await note_service.get_user_note(db, current_user.id, note_id)
+
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
+
     return note
 
-# 霑ｽ蜉: 繝弱・繝井ｽ懈・
+
 @router.post("/", response_model=NoteRead, status_code=status.HTTP_201_CREATED)
-async def create_note(note: NoteCreate, current_user: User = Depends(get_current_user),
-                      db: AsyncSession = Depends(get_db)):
-    # application_id 縺瑚・蛻・・繧｢繝励Μ縺狗｢ｺ隱・
-    result = await db.execute(
-        select(Application).where(Application.id == note.application_id,
-                                  Application.user_id == current_user.id)
+async def create_note(
+    note: NoteCreate,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    app = await note_service.verify_user_application(
+        db, current_user.id, note.application_id
     )
-    app = result.scalars().first()
+
     if not app:
-        raise HTTPException(status_code=404, detail="Application not found or not owned by user")
+        raise HTTPException(
+            status_code=404,
+            detail="Application not found or not owned by user"
+        )
 
-    new_note = Note(content=note.content, application_id=note.application_id)
-    db.add(new_note)
-    await db.commit()
-    await db.refresh(new_note)
-    return new_note
-
-# 霑ｽ蜉: 繝弱・繝亥炎髯､
-@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_note(note_id: int, current_user: User = Depends(get_current_user),
-                      db: AsyncSession = Depends(get_db)):
-    result = await db.execute(
-        select(Note).join(Application).where(Note.id == note_id,
-                                            Application.user_id == current_user.id)
+    return await note_service.create_note(
+        db,
+        note.application_id,
+        note.content
     )
-    note = result.scalars().first()
+
+
+@router.delete("/{note_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_note(
+    note_id: int,
+    current_user: User = Depends(get_current_user),
+    db: AsyncSession = Depends(get_db)
+):
+    note = await note_service.delete_note(
+        db, current_user.id, note_id
+    )
+
     if not note:
         raise HTTPException(status_code=404, detail="Note not found")
-    await db.delete(note)
-    await db.commit()
-    return None
 
+    return None

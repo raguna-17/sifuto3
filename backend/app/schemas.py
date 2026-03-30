@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, Field, EmailStr
 from typing import List, Optional
 from datetime import datetime
-from enum import Enum as PyEnum
+from app.enums import ApplicationStatus
 
 
 # -----------------
@@ -18,6 +18,7 @@ class UserCreate(UserBase):
 
 class UserRead(UserBase):
     id: int
+    is_active: bool
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
@@ -26,17 +27,6 @@ class UserRead(UserBase):
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
-
-
-# -----------------
-# Enum（共通化推奨）
-# -----------------
-
-class ApplicationStatus(str, PyEnum):
-    APPLIED = "applied"
-    INTERVIEW = "interview"
-    OFFER = "offer"
-    REJECTED = "rejected"
 
 
 # -----------------
@@ -67,7 +57,6 @@ class ApplicationBase(BaseModel):
 
 
 class ApplicationCreate(BaseModel):
-    position: str = Field(max_length=100)
     company_id: int
     status: ApplicationStatus = ApplicationStatus.APPLIED
 
