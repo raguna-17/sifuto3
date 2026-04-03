@@ -53,8 +53,12 @@ async def get_company_by_name(
     return company
 
 
-async def create_company(session, data):
-    company = Company(**data)
+async def create_company(session, data, user):
+    company = Company(
+        **data,
+        # もし作成者を持たせるなら
+        # created_by=user.id
+    )
 
     session.add(company)
 
