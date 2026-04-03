@@ -1,4 +1,5 @@
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 from sqlalchemy.future import select
 from sqlalchemy.orm import selectinload
 from fastapi import Depends, HTTPException, status
@@ -52,16 +53,19 @@ async def get_company_by_name(
     return company
 
 
-async def create_company(
-    data: dict,
-    db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)
-):
-    new_company = Company(**data)
-    db.add(new_company)
-    await db.commit()
-    await db.refresh(new_company)
-    return new_company
+async def create_company(session, data):
+    company = Company(**data)
+
+    session.add(company)
+
+    try:
+        await session.commit()
+        await session.refresh(company)
+    except IntegrityError:
+        await session.rollback()
+        raise HTTPException(status_code=400, detail="Company already exists")
+
+    return company
 
 
 async def delete_company(
