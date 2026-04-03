@@ -43,10 +43,12 @@ async def get_company(
 async def create_company(
     company: CompanyCreate,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 認証必須
+    current_user: User = Depends(get_current_user)
 ):
-    # 既存チェック不要なのでそのまま作成
-    return await company_service.create_company(company.model_dump(), db, current_user)
+    return await company_service.create_company(
+        db,
+        company.model_dump()
+    )
 
 
 # -----------------
