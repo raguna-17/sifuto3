@@ -1,5 +1,6 @@
 import os
 import pytest
+import uuid
 from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
@@ -81,9 +82,8 @@ async def test_user(db_session):
 
 @pytest.fixture
 async def test_company(db_session):
-
     company = Company(
-        name="Test Company",
+        name=f"Test Company {uuid.uuid4()}",
         industry="IT"
     )
 
