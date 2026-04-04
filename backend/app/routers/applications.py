@@ -1,4 +1,5 @@
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
@@ -61,9 +62,14 @@ async def create_application(
             },
             position=payload.position
         )
+    except HTTPException:
+        raise
+    except RequestValidationError:  # バリデーションエラーは 422 を返す
+        raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create application: {str(e)}")
 
+        
 # -----------------
 # 応募削除
 # -----------------
