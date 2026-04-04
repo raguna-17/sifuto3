@@ -1,6 +1,7 @@
 from fastapi import APIRouter, Depends, HTTPException, status, Response
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
+
 from app.db import get_db
 from app.schemas import CompanyRead, CompanyCreate
 from app.services import company_service
@@ -9,17 +10,18 @@ from app.models import User
 
 router = APIRouter(prefix="/api/v1/companies", tags=["companies"])
 
-
 # -----------------
-# 一覧
+# 一覧取得
 # -----------------
 @router.get("/", response_model=List[CompanyRead])
 async def get_companies(
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 認証必須
+    current_user: User = Depends(get_current_user)
 ):
-    return await company_service.get_companies(db, current_user)
-
+    try:
+        return await company_service.get_companies(db, current_user)
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch companies: {str(e)}")
 
 # -----------------
 # 単体取得
@@ -28,13 +30,17 @@ async def get_companies(
 async def get_company(
     company_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 認証必須
+    current_user: User = Depends(get_current_user)
 ):
-    company = await company_service.get_company(company_id, db, current_user)
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return company
-
+    try:
+        company = await company_service.get_company(company_id, db, current_user)
+        if not company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        return company
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to fetch company: {str(e)}")
 
 # -----------------
 # 作成
@@ -45,11 +51,10 @@ async def create_company(
     db: AsyncSession = Depends(get_db),
     current_user: User = Depends(get_current_user)
 ):
-    return await company_service.create_company(
-        db,
-        company.model_dump()
-    )
-
+    try:
+        return await company_service.create_company(db, company.model_dump())
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to create company: {str(e)}")
 
 # -----------------
 # 削除
@@ -58,9 +63,14 @@ async def create_company(
 async def delete_company(
     company_id: int,
     db: AsyncSession = Depends(get_db),
-    current_user: User = Depends(get_current_user)  # 認証必須
+    current_user: User = Depends(get_current_user)
 ):
-    company = await company_service.delete_company(company_id, db, current_user)
-    if not company:
-        raise HTTPException(status_code=404, detail="Company not found")
-    return Response(status_code=status.HTTP_204_NO_CONTENT)
+    try:
+        company = await company_service.delete_company(company_id, db, current_user)
+        if not company:
+            raise HTTPException(status_code=404, detail="Company not found")
+        return Response(status_code=status.HTTP_204_NO_CONTENT)
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to delete company: {str(e)}")

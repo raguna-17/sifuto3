@@ -37,6 +37,6 @@ async def login_user(db: AsyncSession, user_in: UserLogin) -> dict:
     except VerifyMismatchError:
         raise HTTPException(status_code=401, detail="Invalid credentials")
 
-    token = create_access_token({"sub": str(user.id)})
+    token = create_access_token(user.id)
 
     return {"access_token": token, "token_type": "bearer"}

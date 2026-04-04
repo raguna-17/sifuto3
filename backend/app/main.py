@@ -5,7 +5,7 @@ from app.routers import users, companies, applications
 
 app = FastAPI()
 
-origins = [os.getenv("FRONT")]
+origins = [os.getenv("FRONT", "http://localhost:5173")]
 
 app.add_middleware(
     CORSMiddleware,

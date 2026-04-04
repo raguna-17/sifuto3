@@ -1,45 +1,95 @@
-import React from 'react';
-import { BrowserRouter as Router, Routes, Route, Navigate } from 'react-router-dom';
-import './App.css';
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Home from "./pages/Home";
+import Login from "./pages/Login";
+import Register from "./pages/Register";
+import Application from "./pages/Application";
+import Company from "./pages/Company";
+import Layout from "./components/layout/Layout";
 
-import Dashboard from './pages/dashboard';
-import Applications from './pages/applications';
-import Companies from './pages/companies';
-import Notes from './pages/notes';
-import Auth from './pages/auth';
+// ログインチェック
+const isAuthenticated = () => !!localStorage.getItem("access_token");
 
-// ===== 認証ガード =====
-function PrivateRoute({ children }) {
-  const isLoggedIn = !!localStorage.getItem('token');
-  return isLoggedIn ? children : <Navigate to="/auth" />;
-}
+// 保護ルート
+const ProtectedRoute = ({ children }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" />;
+  }
+  return children;
+};
 
-function App() {
+// 公開ページ用ルート（ログイン済みならホームにリダイレクト）
+const PublicRoute = ({ children }) => {
+  if (isAuthenticated()) {
+    return <Navigate to="/home" />;
+  }
+  return children;
+};
+
+export default function App() {
   return (
-    <Router>
+    <BrowserRouter>
       <Routes>
-        <Route path="/auth" element={<Auth />} />
+        {/* ルートアクセス時 */}
+        <Route path="/" element={<Navigate to="/home" />} />
 
-        <Route path="/" element={
-          <PrivateRoute><Dashboard /></PrivateRoute>
-        } />
+        {/* 公開ページ */}
+        <Route
+          path="/login"
+          element={
+            <PublicRoute>
+              <Login />
+            </PublicRoute>
+          }
+        />
+        <Route
+          path="/register"
+          element={
+            <PublicRoute>
+              <Register />
+            </PublicRoute>
+          }
+        />
 
-        <Route path="/applications" element={
-          <PrivateRoute><Applications /></PrivateRoute>
-        } />
+        {/* 保護ページ */}
+        <Route
+          path="/home"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Home />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/company"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Company />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
+        <Route
+          path="/application"
+          element={
+            <ProtectedRoute>
+              <Layout>
+                <Application />
+              </Layout>
+            </ProtectedRoute>
+          }
+        />
 
-        <Route path="/companies" element={
-          <PrivateRoute><Companies /></PrivateRoute>
-        } />
-
-        <Route path="/notes" element={
-          <PrivateRoute><Notes /></PrivateRoute>
-        } />
-
-        <Route path="*" element={<Navigate to="/" />} />
+        {/* 不正URL対策 */}
+        <Route
+          path="*"
+          element={
+            isAuthenticated() ? <Navigate to="/home" /> : <Navigate to="/login" />
+          }
+        />
       </Routes>
-    </Router>
+    </BrowserRouter>
   );
 }
-
-export default App;
