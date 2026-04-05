@@ -10,6 +10,7 @@
 - API ドキュメント: [https://mensetu-bakku.onrender.com/docs]
 
 [デモ動画を見る](./demo.mp4)
+https://youtube.com/shorts/xRZllmOjAws?feature=share
 
 
  
