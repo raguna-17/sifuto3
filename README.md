@@ -9,7 +9,7 @@
 - フロントエンド: [https://mensetu-furonto.onrender.com]
 - API ドキュメント: [https://mensetu-bakku.onrender.com/docs]
 
-<video controls src="frontend および他 1 ページ - プロファイル 1 - Microsoft​ Edge 2026-04-05 18-50-33.mp4" title="Title"></video>
+[デモ動画を見る](./demo.mp4)
 
 
  
