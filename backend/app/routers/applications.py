@@ -1,11 +1,15 @@
-from fastapi import APIRouter, Depends, HTTPException, status, Request
+from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.exceptions import RequestValidationError
 from sqlalchemy.ext.asyncio import AsyncSession
 from typing import List
 
 from app.db import get_db
 from app.models import User
-from app.schemas import ApplicationRead, ApplicationCreateRequest
+from app.schemas import (
+    ApplicationRead,
+    ApplicationCreateRequest,
+    ApplicationStatusUpdate  # ← 追加
+)
 from app.auth import get_current_user
 from app.services import application_service
 
@@ -23,6 +27,7 @@ async def get_my_applications(
         return await application_service.get_user_applications(db, current_user)
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch applications: {str(e)}")
+
 
 # -----------------
 # 単体応募取得
@@ -42,6 +47,7 @@ async def get_application(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to fetch application: {str(e)}")
+
 
 # -----------------
 # 応募作成
@@ -64,12 +70,12 @@ async def create_application(
         )
     except HTTPException:
         raise
-    except RequestValidationError:  # バリデーションエラーは 422 を返す
+    except RequestValidationError:
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to create application: {str(e)}")
 
-        
+
 # -----------------
 # 応募削除
 # -----------------
@@ -88,3 +94,32 @@ async def delete_application(
         raise
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"Failed to delete application: {str(e)}")
+
+
+# -----------------
+# ステータス更新（←これが今回の本命）
+# -----------------
+@router.patch("/{application_id}", response_model=ApplicationRead)
+async def update_application_status(
+    application_id: int,
+    payload: ApplicationStatusUpdate,
+    db: AsyncSession = Depends(get_db),
+    current_user: User = Depends(get_current_user)
+):
+    try:
+        app = await application_service.update_application_status(
+            application_id=application_id,
+            status=payload.status,
+            db=db,
+            user=current_user
+        )
+
+        if not app:
+            raise HTTPException(status_code=404, detail="Application not found")
+
+        return app
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"Failed to update status: {str(e)}")

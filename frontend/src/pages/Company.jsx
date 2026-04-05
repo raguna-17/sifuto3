@@ -15,16 +15,25 @@ export default function Company() {
         }
 
         const payload = {
-            company_name: companyName,  // string
-            industry: industry || "",   // 空文字でも送る
-            position: position          // string
+            company_name: companyName,
+            industry: industry || "",
+            position: position
         };
 
         try {
             const data = await createApplication(payload);
-            console.log('応募データ:', data);  // ← ここで company が入っているか確認
+            console.log('応募データ:', data);
+
             alert('応募が完了しました');
-            navigate('/application', { state: data });
+
+            // ❌ これを削除
+            // navigate('/application', { state: data });
+
+            // ✅ フォームだけリセット（これが自然）
+            setCompanyName('');
+            setIndustry('');
+            setPosition('');
+
         } catch (err) {
             console.error(err);
             alert('応募に失敗しました');

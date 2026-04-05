@@ -55,5 +55,5 @@ class Application(Base):
     user = relationship("User", back_populates="applications")
 
     __table_args__ = (
-        UniqueConstraint("user_id", "company_id", name="uq_user_company"),
+        UniqueConstraint("user_id", "company_id", "position", name="uq_user_company_position"),
     )

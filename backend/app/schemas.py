@@ -50,9 +50,12 @@ class ApplicationBase(BaseModel):
     interview_date: Optional[datetime] = None
 
 class ApplicationCreateRequest(BaseModel):
-    company_name: str
-    industry: str
-    position: str
+    company_name: str = Field(min_length=1, max_length=100)
+    industry: Optional[str] = Field(default=None, max_length=100)
+    position: str = Field(min_length=1, max_length=100)
+
+class ApplicationStatusUpdate(BaseModel):
+    status: ApplicationStatus
 
 class ApplicationRead(ApplicationBase):
     id: int

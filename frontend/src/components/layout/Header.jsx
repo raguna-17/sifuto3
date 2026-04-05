@@ -5,7 +5,7 @@ export default function Header() {
     const navigate = useNavigate();
 
     const handleLogout = () => {
-        localStorage.removeItem("token");
+        localStorage.removeItem("access_token");
         navigate("/login");
     };
 
@@ -17,9 +17,9 @@ export default function Header() {
             padding: "10px 0",   // ヘッダー内の上下余白
             borderBottom: "1px solid #ccc"  // ヘッダーと本文の視覚的区切り
         }}>
-            <h1>home</h1>
+            <h1>ホーム画面</h1>
             <button onClick={handleLogout} style={{ cursor: "pointer" }}>
-                Logout
+                ログアウト
             </button>
         </header>
     );
