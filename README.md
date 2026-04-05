@@ -11,8 +11,8 @@
 ## デモ
 フロントエンド：
 https://kyusyoku-furonto.onrender.com
-バックエンド：
-https://kyusyoku-bakku.onrender.com
+
+
 動作イメージ動画：
 https://www.youtube.com/shorts/ugAJGbqNh-8
 
@@ -27,6 +27,13 @@ https://www.youtube.com/shorts/ugAJGbqNh-8
 * Alembic（マイグレーション）
 * JWT認証（python-jose）
 * Argon2（パスワードハッシュ）
+
+### Frontend
+React
+Vite（高速ビルドツール）
+javaScript
+Axios（API通信）
+React Router（画面遷移管理
 
 ### その他
 
@@ -148,5 +155,5 @@ alembic upgrade head
 
 * テストカバレッジの向上（特に企業・応募機能）
 * エラーハンドリングの詳細化
-* フロントエンドとの統合強化
+* UI/UXの改善
 * 権限管理の追加
