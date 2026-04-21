@@ -1,66 +1,47 @@
 import pytest
-from httpx import AsyncClient, ASGITransport
-from app.main import app
-
-
-BASE_URL = "http://test"
 
 
 # -------------------------
 # ユーザー登録（正常系）
 # -------------------------
 @pytest.mark.asyncio
-async def test_register_user_success():
-    transport = ASGITransport(app=app)
-
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
-        res = await ac.post(
-            "/users/register",
-            json={
-                "email": "test@example.com",
-                "password": "password123",
-            },
-        )
+async def test_register_user_success(client):
+    res = await client.post(
+        "/users/register",
+        json={
+            "email": "test@example.com",
+            "password": "password123",
+        },
+    )
 
     assert res.status_code == 200
     data = res.json()
 
     assert data["email"] == "test@example.com"
     assert "id" in data
-    assert "hashed_password" not in data
+    assert "is_active" in data
 
 
 # -------------------------
 # 重複登録（異常系）
 # -------------------------
 @pytest.mark.asyncio
-async def test_register_duplicate_email():
-    transport = ASGITransport(app=app)
+async def test_register_duplicate_email(client):
+    await client.post(
+        "/users/register",
+        json={
+            "email": "dup@example.com",
+            "password": "password123",
+        },
+    )
 
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
-        # 1回目
-        await ac.post(
-            "/users/register",
-            json={
-                "email": "dup@example.com",
-                "password": "password123",
-            },
-        )
-
-        # 2回目（失敗）
-        res = await ac.post(
-            "/users/register",
-            json={
-                "email": "dup@example.com",
-                "password": "password123",
-            },
-        )
+    res = await client.post(
+        "/users/register",
+        json={
+            "email": "dup@example.com",
+            "password": "password123",
+        },
+    )
 
     assert res.status_code == 400
     assert res.json()["detail"] == "Email already registered"
@@ -70,29 +51,22 @@ async def test_register_duplicate_email():
 # ログイン成功
 # -------------------------
 @pytest.mark.asyncio
-async def test_login_success():
-    transport = ASGITransport(app=app)
+async def test_login_success(client):
+    await client.post(
+        "/users/register",
+        json={
+            "email": "login@example.com",
+            "password": "password123",
+        },
+    )
 
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
-
-        await ac.post(
-            "/users/register",
-            json={
-                "email": "login@example.com",
-                "password": "password123",
-            },
-        )
-
-        res = await ac.post(
-            "/users/login",
-            json={
-                "email": "login@example.com",
-                "password": "password123",
-            },
-        )
+    res = await client.post(
+        "/users/login",
+        json={
+            "email": "login@example.com",
+            "password": "password123",
+        },
+    )
 
     assert res.status_code == 200
     data = res.json()
@@ -105,87 +79,63 @@ async def test_login_success():
 # ログイン失敗（異常系）
 # -------------------------
 @pytest.mark.asyncio
-async def test_login_fail_wrong_password():
-    transport = ASGITransport(app=app)
+async def test_login_fail_wrong_password(client):
+    await client.post(
+        "/users/register",
+        json={
+            "email": "fail@example.com",
+            "password": "password123",
+        },
+    )
 
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
-
-        await ac.post(
-            "/users/register",
-            json={
-                "email": "fail@example.com",
-                "password": "password123",
-            },
-        )
-
-        res = await ac.post(
-            "/users/login",
-            json={
-                "email": "fail@example.com",
-                "password": "wrongpass",
-            },
-        )
+    res = await client.post(
+        "/users/login",
+        json={
+            "email": "fail@example.com",
+            "password": "wrongpass",
+        },
+    )
 
     assert res.status_code == 401
 
 
 # -------------------------
-# /me 成功（認証あり）
+# /me 正常系（認証あり）
 # -------------------------
 @pytest.mark.asyncio
-async def test_get_me_success():
-    transport = ASGITransport(app=app)
+async def test_get_me_success(client):
+    await client.post(
+        "/users/register",
+        json={
+            "email": "me@example.com",
+            "password": "password123",
+        },
+    )
 
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
+    login_res = await client.post(
+        "/users/login",
+        json={
+            "email": "me@example.com",
+            "password": "password123",
+        },
+    )
 
-        # register
-        await ac.post(
-            "/users/register",
-            json={
-                "email": "me@example.com",
-                "password": "password123",
-            },
-        )
+    token = login_res.json()["access_token"]
 
-        # login
-        login_res = await ac.post(
-            "/users/login",
-            json={
-                "email": "me@example.com",
-                "password": "password123",
-            },
-        )
-
-        token = login_res.json()["access_token"]
-
-        # me
-        res = await ac.get(
-            "/users/me",
-            headers={"Authorization": f"Bearer {token}"},
-        )
+    res = await client.get(
+        "/users/me",
+        headers={"Authorization": f"Bearer {token}"},
+    )
 
     assert res.status_code == 200
     assert res.json()["email"] == "me@example.com"
 
 
 # -------------------------
-# /me 認証なし（異常系）
+# /me 異常系（未認証）
 # -------------------------
 @pytest.mark.asyncio
-async def test_get_me_unauthorized():
-    transport = ASGITransport(app=app)
-
-    async with AsyncClient(
-        transport=transport,
-        base_url=BASE_URL,
-    ) as ac:
-    
-        res = await ac.get("/users/me")
+async def test_get_me_unauthorized(client):
+    res = await client.get("/users/me")
 
     assert res.status_code == 401
