@@ -8,7 +8,10 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 
 from alembic import context
 
-from app.models import Base  # ここに全モデルの Base をインポート
+from app.db import Base
+from app.users import model
+from app.organizations import model
+from app.job_applications import model
 
 config = context.config
 

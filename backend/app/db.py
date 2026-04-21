@@ -1,17 +1,23 @@
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 from sqlalchemy.orm import declarative_base
-import os
+from app.core.config import get_settings
 
+settings = get_settings()
 
-DATABASE_URL = os.getenv("DATABASE_URL")
+if not settings.DATABASE_URL:
+    raise ValueError("DATABASE_URL is not set")
 
-engine = create_async_engine(DATABASE_URL, echo=False)
-
-
-async_session = async_sessionmaker(
-    engine, expire_on_commit=False, class_=AsyncSession
+engine = create_async_engine(
+    settings.DATABASE_URL,
+    echo=(settings.ENV == "dev"),
+    pool_pre_ping=True,
 )
 
+async_session = async_sessionmaker(
+    bind=engine,
+    expire_on_commit=False,
+    class_=AsyncSession,
+)
 
 Base = declarative_base()
 
@@ -19,4 +25,3 @@ Base = declarative_base()
 async def get_db():
     async with async_session() as session:
         yield session
-

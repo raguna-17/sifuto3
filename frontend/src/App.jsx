@@ -1,95 +1,53 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import Layout from "./layouts/Layout";
+
+import LoginPage from "./features/auth/LoginPage";
+import RegisterPage from "./features/auth/RegisterPage";
+
 import Home from "./pages/Home";
-import Login from "./pages/Login";
-import Register from "./pages/Register";
-import Application from "./pages/Application";
-import Company from "./pages/Company";
-import Layout from "./components/layout/Layout";
+import JobApplicationPage from "./features/job_applications/JobApplicationPage";
+import OrganizationPage from "./features/organizations/OrganizationPage";
 
-// ログインチェック
-const isAuthenticated = () => !!localStorage.getItem("access_token");
-
-// 保護ルート
-const ProtectedRoute = ({ children }) => {
-  if (!isAuthenticated()) {
-    return <Navigate to="/login" />;
-  }
-  return children;
+// 仮の認証チェック
+const isAuthenticated = () => {
+  return !!localStorage.getItem("token");
 };
 
-// 公開ページ用ルート（ログイン済みならホームにリダイレクト）
-const PublicRoute = ({ children }) => {
-  if (isAuthenticated()) {
-    return <Navigate to="/home" />;
-  }
-  return children;
+// 認証ガード
+const PrivateRoute = ({ children }) => {
+  return isAuthenticated() ? children : <Navigate to="/login" />;
 };
 
-export default function App() {
+function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ルートアクセス時 */}
-        <Route path="/" element={<Navigate to="/home" />} />
+        {/* ログイン系（LayoutなしでもOK） */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-        {/* 公開ページ */}
+        {/* 認証後ページ */}
         <Route
-          path="/login"
+          path="/"
           element={
-            <PublicRoute>
-              <Login />
-            </PublicRoute>
+            <PrivateRoute>
+              <Layout />
+            </PrivateRoute>
           }
-        />
-        <Route
-          path="/register"
-          element={
-            <PublicRoute>
-              <Register />
-            </PublicRoute>
-          }
-        />
+        >
+          {/* ホーム */}
+          <Route index element={<Home />} />
 
-        {/* 保護ページ */}
-        <Route
-          path="/home"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Home />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/company"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Company />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
-        <Route
-          path="/application"
-          element={
-            <ProtectedRoute>
-              <Layout>
-                <Application />
-              </Layout>
-            </ProtectedRoute>
-          }
-        />
+          {/* 各ページ */}
+          <Route path="job-applications" element={<JobApplicationPage />} />
+          <Route path="organizations" element={<OrganizationPage />} />
+        </Route>
 
-        {/* 不正URL対策 */}
-        <Route
-          path="*"
-          element={
-            isAuthenticated() ? <Navigate to="/home" /> : <Navigate to="/login" />
-          }
-        />
+        {/* それ以外はログインへ */}
+        <Route path="*" element={<Navigate to="/login" />} />
       </Routes>
     </BrowserRouter>
   );
 }
+
+export default App;

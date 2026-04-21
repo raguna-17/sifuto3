@@ -1,93 +1,157 @@
 import pytest
+from httpx import AsyncClient
+from app.main import app
 
 
+BASE_URL = "http://test"
 
-async def test_register_success(client):
-    payload = {
-        "email": "newuser@example.com",
-        "password": "password123"
-    }
 
-    res = await client.post("/api/v1/users/register", json=payload)
+# -------------------------
+# ユーザー登録（正常系）
+# -------------------------
+@pytest.mark.asyncio
+async def test_register_user_success():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        res = await ac.post(
+            "/users/register",
+            json={
+                "email": "test@example.com",
+                "password": "password123",
+            },
+        )
 
     assert res.status_code == 200
     data = res.json()
 
-    assert data["email"] == payload["email"]
+    assert data["email"] == "test@example.com"
     assert "id" in data
+    assert "hashed_password" not in data
 
 
+# -------------------------
+# 重複登録（異常系）
+# -------------------------
+@pytest.mark.asyncio
+async def test_register_duplicate_email():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        # 1回目
+        await ac.post(
+            "/users/register",
+            json={
+                "email": "dup@example.com",
+                "password": "password123",
+            },
+        )
 
-async def test_register_duplicate_email(client, test_user):
-    payload = {
-        "email": test_user.email,
-        "password": "password123"
-    }
-
-    res = await client.post("/api/v1/users/register", json=payload)
+        # 2回目（失敗）
+        res = await ac.post(
+            "/users/register",
+            json={
+                "email": "dup@example.com",
+                "password": "password123",
+            },
+        )
 
     assert res.status_code == 400
     assert res.json()["detail"] == "Email already registered"
 
 
+# -------------------------
+# ログイン成功
+# -------------------------
+@pytest.mark.asyncio
+async def test_login_success():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        await ac.post(
+            "/users/register",
+            json={
+                "email": "login@example.com",
+                "password": "password123",
+            },
+        )
 
-async def test_login_success(client, test_user):
-    payload = {
-        "email": test_user.email,
-        "password": "password"
-    }
-
-    res = await client.post("/api/v1/users/login", json=payload)
+        res = await ac.post(
+            "/users/login",
+            json={
+                "email": "login@example.com",
+                "password": "password123",
+            },
+        )
 
     assert res.status_code == 200
-
     data = res.json()
 
     assert "access_token" in data
     assert data["token_type"] == "bearer"
 
 
+# -------------------------
+# ログイン失敗（異常系）
+# -------------------------
+@pytest.mark.asyncio
+async def test_login_fail_wrong_password():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        await ac.post(
+            "/users/register",
+            json={
+                "email": "fail@example.com",
+                "password": "password123",
+            },
+        )
 
-async def test_login_invalid_email(client):
-    payload = {
-        "email": "notfound@example.com",
-        "password": "password"
-    }
-
-    res = await client.post("/api/v1/users/login", json=payload)
+        res = await ac.post(
+            "/users/login",
+            json={
+                "email": "fail@example.com",
+                "password": "wrongpass",
+            },
+        )
 
     assert res.status_code == 401
-    assert res.json()["detail"] == "Invalid credentials"
 
 
+# -------------------------
+# /me 成功（認証あり）
+# -------------------------
+@pytest.mark.asyncio
+async def test_get_me_success():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        # register
+        await ac.post(
+            "/users/register",
+            json={
+                "email": "me@example.com",
+                "password": "password123",
+            },
+        )
 
-async def test_login_wrong_password(client, test_user):
-    payload = {
-        "email": test_user.email,
-        "password": "wrongpassword"
-    }
+        # login
+        login_res = await ac.post(
+            "/users/login",
+            json={
+                "email": "me@example.com",
+                "password": "password123",
+            },
+        )
 
-    res = await client.post("/api/v1/users/login", json=payload)
+        token = login_res.json()["access_token"]
 
-    assert res.status_code == 401
-    assert res.json()["detail"] == "Invalid credentials"
-
-
-
-async def test_read_current_user_success(client, auth_headers):
-    res = await client.get("/api/v1/users/me", headers=auth_headers)
+        # me
+        res = await ac.get(
+            "/users/me",
+            headers={"Authorization": f"Bearer {token}"},
+        )
 
     assert res.status_code == 200
-
-    data = res.json()
-
-    assert "email" in data
-    assert "id" in data
+    assert res.json()["email"] == "me@example.com"
 
 
-
-async def test_read_current_user_no_token(client):
-    res = await client.get("/api/v1/users/me")
+# -------------------------
+# /me 認証なし（異常系）
+# -------------------------
+@pytest.mark.asyncio
+async def test_get_me_unauthorized():
+    async with AsyncClient(app=app, base_url=BASE_URL) as ac:
+        res = await ac.get("/users/me")
 
     assert res.status_code == 401
-

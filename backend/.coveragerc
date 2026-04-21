@@ -1,6 +1,4 @@
 [run]
-omit =
-    app/services/*
 
 [report]
 show_missing = True

@@ -1,7 +1,11 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 import os
-from app.routers import users, companies, applications
+
+from app.users.router import router as user_router
+from app.organizations.router import router as organization_router
+from app.job_applications.router import router as job_application_router
+
 
 app = FastAPI()
 
@@ -11,13 +15,10 @@ app.add_middleware(
     CORSMiddleware,
     allow_origins=origins,
     allow_credentials=True,
-    allow_methods=["*"],  # GET, POST, PUT, DELETE など全部OK
-    allow_headers=["*"],  # Authorizationとか全部許可
+    allow_methods=["*"],
+    allow_headers=["*"],
 )
 
-app.include_router(users.router)
-app.include_router(companies.router)
-app.include_router(applications.router)
-
-
-
+app.include_router(user_router)
+app.include_router(organization_router)
+app.include_router(job_application_router)

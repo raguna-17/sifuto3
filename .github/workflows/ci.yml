@@ -30,7 +30,7 @@ jobs:
 
     env:
       DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/testdb
-      JWT_SECRET_KEY: testsecrethghggugugyy
+      SECRET_KEY: testsecrethghggugugyy
 
     steps:
       - uses: actions/checkout@v4
