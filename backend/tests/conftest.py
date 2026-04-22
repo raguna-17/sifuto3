@@ -7,9 +7,9 @@ from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.db import get_db
-from app.users import model
-from app.organizations import model
-from app.job_applications import model
+from app.users.model import User
+from app.organizations.model import Organization
+from app.job_applications.model import JobApplication
 from app.core.security import create_access_token
 from argon2 import PasswordHasher
 
