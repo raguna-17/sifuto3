@@ -23,13 +23,13 @@ jobs:
         ports:
           - 5432:5432
         options: >-
-          --health-cmd="pg_isready -U testuser"
+          --health-cmd="pg_isready -U testuser -d testdb"
           --health-interval=5s
           --health-timeout=5s
           --health-retries=9
 
     env:
-      DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/testdb
+      DATABASE_URL: postgresql+asyncpg://testuser:testpass@postgres:5432/testdb
       SECRET_KEY: testsecrethghggugugyy
 
     steps:
