@@ -9,24 +9,45 @@ from sqlalchemy.ext.asyncio import async_engine_from_config
 from alembic import context
 
 from app.db import Base
-from app.users import model
-from app.organizations import model
-from app.job_applications import model
+from app.users import model  # noqa
+from app.organizations import model  # noqa
+from app.job_applications import model  # noqa
 
+
+# -------------------------
+# Alembic config
+# -------------------------
 config = context.config
 
-# Logging 設定
-fileConfig(config.config_file_name)
-
-DATABASE_URL = os.getenv("DATABASE_URL")
+if config.config_file_name is not None:
+    fileConfig(config.config_file_name)
 
 
-# オフラインモード
+# -------------------------
+# 遅延評価（ここが重要）
+# -------------------------
+def get_database_url() -> str:
+    url = os.getenv("DATABASE_URL")
+    if not url:
+        raise RuntimeError("DATABASE_URL is not set")
+    return url
+
+
+# -------------------------
+# metadata
+# -------------------------
+target_metadata = Base.metadata
+
+
+# -------------------------
+# offline mode
+# -------------------------
 def run_migrations_offline():
-    url = DATABASE_URL
+    url = get_database_url()
+
     context.configure(
         url=url,
-        target_metadata=Base.metadata,
+        target_metadata=target_metadata,
         literal_binds=True,
         dialect_opts={"paramstyle": "named"},
     )
@@ -35,30 +56,42 @@ def run_migrations_offline():
         context.run_migrations()
 
 
-# 同期関数として Alembic マイグレーション処理を定義
+# -------------------------
+# sync migration logic
+# -------------------------
 def do_run_migrations(connection: Connection):
     context.configure(
         connection=connection,
-        target_metadata=Base.metadata,
-        compare_type=True,  # 型の変更も検出
+        target_metadata=target_metadata,
+        compare_type=True,
     )
+
     with context.begin_transaction():
         context.run_migrations()
 
 
-# オンラインモード（非同期 DB 接続）
+# -------------------------
+# async migration
+# -------------------------
 async def run_migrations_online():
+    configuration = config.get_section(config.config_ini_section)
+    configuration["sqlalchemy.url"] = get_database_url()
+
     connectable = async_engine_from_config(
-        {"sqlalchemy.url": DATABASE_URL},
+        configuration,
         prefix="sqlalchemy.",
         poolclass=pool.NullPool,
-        future=True,
     )
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)
 
+    await connectable.dispose()
 
+
+# -------------------------
+# entrypoint
+# -------------------------
 if context.is_offline_mode():
     run_migrations_offline()
 else:
