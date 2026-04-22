@@ -4,17 +4,22 @@ from sqlalchemy.ext.asyncio import create_async_engine, async_sessionmaker, Asyn
 
 from app.main import app
 from app.db import Base, get_db
+import os
 
 
-# -----------------------
-# テスト専用DB
-# -----------------------
-DATABASE_URL = "sqlite+aiosqlite:///./test.db"
+# -----------------------------------
+# 環境変数は「読むだけ」
+# -----------------------------------
+DATABASE_URL = os.getenv("DATABASE_URL")
 
+
+# -----------------------------------
+# テスト専用Engine（本番と完全分離）
+# -----------------------------------
 test_engine = create_async_engine(
     DATABASE_URL,
-    future=True,
     echo=False,
+    future=True,
 )
 
 TestingSessionLocal = async_sessionmaker(
@@ -24,9 +29,9 @@ TestingSessionLocal = async_sessionmaker(
 )
 
 
-# -----------------------
-# DB初期化
-# -----------------------
+# -----------------------------------
+# DB初期化（テスト全体で1回）
+# -----------------------------------
 @pytest.fixture(scope="session", autouse=True)
 async def setup_db():
     async with test_engine.begin() as conn:
@@ -38,20 +43,21 @@ async def setup_db():
         await conn.run_sync(Base.metadata.drop_all)
 
 
-# -----------------------
-# DBセッション
-# -----------------------
+# -----------------------------------
+# DBセッション（各テストごと）
+# -----------------------------------
 @pytest.fixture
 async def db_session():
     async with TestingSessionLocal() as session:
         yield session
 
 
-# -----------------------
-# FastAPI client
-# -----------------------
+# -----------------------------------
+# FastAPI Test Client
+# -----------------------------------
 @pytest.fixture
 async def client(db_session):
+    # DI override
     async def override_get_db():
         yield db_session
 
@@ -65,4 +71,5 @@ async def client(db_session):
     ) as ac:
         yield ac
 
+    # cleanup（必ず戻す）
     app.dependency_overrides.clear()
