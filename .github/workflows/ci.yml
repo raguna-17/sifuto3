@@ -26,7 +26,7 @@ jobs:
           --health-cmd="pg_isready -U testuser -d testdb"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=9
+          --health-retries=10
 
     env:
       DATABASE_URL: postgresql+asyncpg://testuser:testpass@postgres:5432/testdb
@@ -43,9 +43,22 @@ jobs:
       - name: Install dependencies
         run: |
           pip install -r requirements.txt
-          pip install  pytest-cov pytest-asyncio httpx
+          pip install pytest-cov pytest-asyncio httpx alembic asyncpg
 
+      - name: Debug DNS
+        run: |
+          getent hosts postgres || true
+          ping -c 2 postgres || true
 
+      - name: Wait for Postgres
+        run: |
+          for i in {1..30}; do
+            pg_isready -h postgres -U testuser -d testdb && break
+            echo "waiting..."
+            sleep 2
+          done
+          
+      # ★migrationはDB ready後に実行
       - name: Run migrations
         run: alembic upgrade head
 
