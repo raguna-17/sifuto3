@@ -9,41 +9,57 @@ import os
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-test_engine = create_async_engine(
-    DATABASE_URL,
-    future=True,
-    pool_pre_ping=True,
-)
 
-TestingSessionLocal = async_sessionmaker(
-    bind=test_engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+# ----------------------------------
+# engineを fixture内で作る（重要）
+# ----------------------------------
+@pytest.fixture(scope="session")
+async def engine():
+    engine = create_async_engine(
+        DATABASE_URL,
+        future=True,
+        pool_pre_ping=True,
+    )
 
-
-# -------------------------
-# DB初期化
-# -------------------------
-@pytest.fixture(scope="session", autouse=True)
-async def setup_db():
-    async with test_engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
 
-    yield
+    yield engine
 
-    async with test_engine.begin() as conn:
+    async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.drop_all)
 
+    await engine.dispose()
 
-# -------------------------
-# 重要修正：毎リクエストで新session
-# -------------------------
+
+# ----------------------------------
+# session maker
+# ----------------------------------
 @pytest.fixture
-async def client():
+def sessionmaker(engine):
+    return async_sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
+    )
+
+
+# ----------------------------------
+# DB session（完全分離）
+# ----------------------------------
+@pytest.fixture
+async def db_session(sessionmaker):
+    async with sessionmaker() as session:
+        yield session
+
+
+# ----------------------------------
+# client（毎回DBセッション新規）
+# ----------------------------------
+@pytest.fixture
+async def client(db_session):
     async def override_get_db():
-        async with TestingSessionLocal() as session:
-            yield session   # ←ここ重要（毎回新規）
+        yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
 
