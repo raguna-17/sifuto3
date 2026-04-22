@@ -1,7 +1,7 @@
 import { useEffect, useState } from "react";
-import Button from "../components/Button";
-import Modal from "../components/Modal";
-import Spinner from "../components/Spinner";
+import Button from "../../components/Button";
+import Modal from "../../components/Modal";
+import Spinner from "../../components/Spinner";
 
 const API_URL = import.meta.env.VITE_API_URL;
 
