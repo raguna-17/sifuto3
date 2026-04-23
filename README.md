@@ -1,126 +1,160 @@
-# 求人管理アプリ（Kyusyoku App）
-## 概要
+# 求人アプリ
 
-企業への応募状況を一元管理できるWebアプリです。
-実際の求人サービス利用体験をもとに、応募管理・進捗管理を効率化することを目的に開発しました。
+FastAPI + SQLAlchemy + JWT認証を用いた、求人応募システムのバックエンドAPIです。  
+ユーザーは企業情報と応募履歴を管理できます。
+
+---
+
+## 🚀 技術スタック
+
+- Python 3.12
+- FastAPI
+- SQLAlchemy（Async ORM）
+- PostgreSQL（想定）
+- Alembic（マイグレーション）
+- JWT認証（python-jose）
+- パスワードハッシュ：argon2（passlib）
+- Docker
+
+---
+
+## 🧱 アーキテクチャ
+
+ドメイン単位で構成されたレイヤード構造
+
+各ドメインは以下構成：
+
+- router（APIエンドポイント）
+- service（ビジネスロジック）
+- model（DBモデル）
+- schema（Pydantic）
+
+---
+
+## 🔐 認証
+
+JWTトークン認証を採用
+
+- ログイン時にアクセストークン発行
+- `/users/me` で認証ユーザー取得
+- パスワードはargon2でハッシュ化
+
+### エンドポイント
+
+| Method | Path | Description |
+|------|------|-------------|
+| POST | /users/register | ユーザー登録 |
+| POST | /users/login | ログイン |
+| GET | /users/me | 自分の情報取得 |
+
+---
+
+## 👤 ユーザー機能
+
+- ユーザー登録 / ログイン
+- 自分の情報取得
+
+---
+
+## 🏢 企業（Organizations）
+
+ユーザーごとに企業情報を管理
+
+### エンドポイント
+
+| Method | Path | Description |
+|------|------|-------------|
+| POST | /organizations | 企業作成 |
+| GET | /organizations | 一覧取得 |
+| GET | /organizations/{id} | 詳細取得 |
+| DELETE | /organizations/{id} | 削除 |
+
+---
+
+## 💼 応募（Job Applications）
+
+企業への応募履歴を管理
+
+### エンドポイント
+
+| Method | Path | Description |
+|------|------|-------------|
+| POST | /job-applications | 応募作成 |
+| GET | /job-applications | 自分の応募一覧 |
+| GET | /job-applications/{id} | 応募詳細 |
+| DELETE | /job-applications/{id} | 削除 |
+
+---
+
+## 🗄 データモデル
+
+### User
+
+- email
+- hashed_password
+- is_active
+- created_at
+
+リレーション：
+- job_applications
+- organizations
+
+---
+
+### Organization
+
+- name
+- industry
+- user_id
+
+リレーション：
+- job_applications
+
+---
+
+### JobApplication
+
+- user_id
+- organization_id
+- organization_name
+- job_title
+- created_at
+
+---
 
 
-実務を想定し、以下を重視しています：
+---
 
-* 認証を含めたセキュアなAPI設計
-* フロントとバックの疎結合構成
-* 保守性・拡張性を意識したレイヤードアーキテクチャ
+## 📌 特徴
 
+- ドメイン分離アーキテクチャ
+- JWT認証
+- 非同期SQLAlchemy構成
+- ユーザー単位のデータ分離
+- REST API設計
+- テスト構成あり（pytest）
 
-## フロントエンド：
-## https://kyusyoku-furonto.onrender.com
+---
 
-## 動作イメージ：
-## https://www.youtube.com/shorts/ugAJGbqNh-8
+## 📂 フロントエンド連携
 
-## 技術選定の理由
-### バックエンド
+React（Vite）で構築
 
-FastAPI
-→ 高速なAPI開発と型安全な設計のため
+- auth / organizations / job_applications に分割
+- 各featureごとにAPI層を分離
 
-SQLAlchemy（Async対応）
-→ 非同期処理によるパフォーマンス向上
+---
 
-PostgreSQL
-→ 本番運用を想定したRDB選定
+## 📈 今後の拡張案
 
-Alembic
-→ マイグレーション管理によるスキーマ変更の安全性確保
+- ページネーション
+- 検索機能
+- ロール管理（admin/user）
+- Redisキャッシュ
+- CI/CD導入
 
-JWT認証（python-jose）
-→ ステートレスな認証によるスケーラビリティ確保
+---
 
-Argon2
-→ 高いセキュリティを持つパスワードハッシュ化
+## 🧑‍💻 Author
 
-### フロントエンド
-
-React + Vite
-→ 高速な開発環境とコンポーネントベース設計
-
-Axios
-→ API通信の一元管理
-
-React Router
-→ SPAにおける柔軟な画面遷移制御
-
-インフラ・その他
-
-Docker / Docker Compose
-→ 環境差異の排除
-
-Pytest
-→ テストによる品質担保
-
-
-
-## 認証設計
-
-JWT認証を採用し、以下のフローで管理：
-
-ログイン時にトークンを発行
-
-トークンからユーザーIDを取得
-
-DBと照合し認証を検証
-
-パスワードはArgon2でハッシュ化し、安全性を確保
-
-## 主な機能
-### ユーザー機能
-ユーザー登録
-
-ログイン（JWT認証）
-
-認証ユーザー取得（/me）
-### 企業管理
-企業の登録
-
-企業一覧の取得
-
-### 応募管理
-応募情報の登録
-
-ステータス管理（応募中・面接中など）
-
-面接日程の管理
-
-## API設計
-* Pydanticスキーマで入力・出力を分離
-* ORMモデルとレスポンスを分離
-* HTTPステータスコードを適切に返却
-## 実装上の工夫
-* Service層を導入しビジネスロジックを分離
-* 非同期処理（AsyncSession）によるパフォーマンス最適化
-* ユニーク制約によるデータ整合性の担保
-* フロントエンドとの責務分離
-* Dockerによる環境統一とデプロイの簡略化
-## テスト
-
-Pytestを用いてAPIテストを実施：
-
-ユーザー登録・ログイン・認証フローを重点的に検証
-正常系・異常系の両方をカバー
-→ リファクタリングや機能追加に耐えられる品質を確保
-## 課題と改善
-### 課題
-テストカバレッジが一部機能で不足
-
-エラーハンドリングの粒度が粗い
-
-UI/UXの最適化不足
-### 改善案
-
-エラーレスポンスの標準化と詳細化
-
-UI/UXの改善
-### 今後の展望
-権限管理（RBAC）の導入
-
-UIの改善によるユーザビリティ向上
+Portfolio project
