@@ -8,9 +8,6 @@
 「どの企業に、どのステータスで、次に何をすべきか」を一目で把握できる状態を目指し、応募情報を中心としたデータ構造で設計しています。
 
 
-https://kyuujin-bakku.onrender.com
-## https://kyuujin-furonto.onrender.com
-
 ## 🎯 解決する課題
 
 就職・転職活動において、以下のような問題が発生しやすいと感じました：
@@ -20,6 +17,17 @@ https://kyuujin-bakku.onrender.com
 次に取るべきアクションが不明確になりやすい
 
 本アプリでは、これらを「応募情報の一元管理」によって解決します。
+
+
+## 🎬 デモ
+
+### ▶ 動画で見る：
+### https://www.youtube.com/watch?v=ZrsMjHsFsDI
+
+## 🌐 アプリURL
+
+### https://kyuujin-furonto.onrender.com
+
 
 ## 🚀 技術スタック
 Backend
