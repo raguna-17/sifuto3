@@ -26,11 +26,6 @@ def create_access_token(data: dict) -> str:
     to_encode = data.copy()
     if "sub" in to_encode:
         to_encode["sub"] = str(to_encode["sub"])
-    # ★ここが重要
-    # sub = user_id に統一
-    if "sub" in to_encode and isinstance(to_encode["sub"], str):
-        # 既存email運用対策（不要なら削除OK）
-        pass
 
     to_encode.update({"exp": expire})
 
@@ -43,7 +38,7 @@ def create_access_token(data: dict) -> str:
 
 def decode_access_token(token: str) -> dict:
     try:
-        payload = jwt.decode(
+        payload = jwt.decode(#署名検証（改ざんチェック）
             token,
             settings.SECRET_KEY,
             algorithms=[settings.JWT_ALGORITHM],

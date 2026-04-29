@@ -2,8 +2,8 @@ from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 from fastapi import HTTPException
 
-from app.users.model import User
-from app.users.schema import UserCreate
+from app.recruiting.users.model import User
+from app.recruiting.users.schema import UserCreate
 from app.core.security import hash_password, verify_password
 
 

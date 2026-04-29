@@ -1,17 +1,28 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import axios from "axios";
 
-export const fetchOrganizations = async (token) => {
-    const res = await fetch(`${API_URL}/organizations`, {
-        headers: {
-            Authorization: `Bearer ${token}`,
-        },
-    });
+const API = import.meta.env.VITE_API_URL;
 
-    const data = await res.json();
+const authHeader = () => ({
+    headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+    },
+});
 
-    if (!res.ok) {
-        throw new Error(data.detail || "Failed to fetch organizations");
-    }
+export const getOrganizations = async () => {
+    const res = await axios.get(`${API}/organizations/`, authHeader());
+    return res.data;
+};
 
-    return data;
+export const createOrganization = async (data) => {
+    const res = await axios.post(`${API}/organizations/`, data, authHeader());
+    return res.data;
+};
+
+export const updateOrganization = async (id, data) => {
+    const res = await axios.patch(`${API}/organizations/${id}`, data, authHeader());
+    return res.data;
+};
+
+export const deleteOrganization = async (id) => {
+    await axios.delete(`${API}/organizations/${id}`, authHeader());
 };

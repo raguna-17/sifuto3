@@ -1,87 +1,106 @@
 import { useState } from "react";
-import { createJobApplication } from "../job_applications/api";
-import Button from "../../components/Button";
-import Input from "../../components/Input";
-
-const API_URL = import.meta.env.VITE_API_URL;
+import { Link } from "react-router-dom";
+import { useOrganizations } from "./useOrganizations";
 
 const OrganizationPage = () => {
-    const [companyName, setCompanyName] = useState("");
-    const [jobTitle, setJobTitle] = useState("");
-    const [loading, setLoading] = useState(false);
+    const { orgs, loading, error, createOrg } = useOrganizations();
 
-    const token = localStorage.getItem("token");
+    const [form, setForm] = useState({
+        name: "",
+        industry: "",
+        headquarters: "",
+        founded_year: "",
+    });
 
-    const handleApply = async () => {
-        if (!companyName || !jobTitle) {
-            alert("会社名と職種を入力してください");
-            return;
-        }
-
-        setLoading(true);
-
-        try {
-            // ① organization作成
-            const orgRes = await fetch(`${API_URL}/organizations`, {
-                method: "POST",
-                headers: {
-                    "Content-Type": "application/json",
-                    Authorization: `Bearer ${token}`,
-                },
-                body: JSON.stringify({
-                    name: companyName,
-                    industry: null,
-                }),
-            });
-
-            const orgData = await orgRes.json();
-
-            if (!orgRes.ok) {
-                throw new Error(orgData.detail || "Organization作成失敗");
-            }
-
-            // ② job application作成
-            const jobRes = await createJobApplication(
-                {
-                    organization_id: orgData.id,
-                    job_title: jobTitle,
-                },
-                token
-            );
-
-            alert("応募成功しました");
-
-            // reset
-            setCompanyName("");
-            setJobTitle("");
-
-        } catch (err) {
-            console.error(err);
-            alert("応募に失敗しました");
-        } finally {
-            setLoading(false);
-        }
+    const handleChange = (e) => {
+        setForm({
+            ...form,
+            [e.target.name]: e.target.value,
+        });
     };
 
+    const handleSubmit = async (e) => {
+        e.preventDefault();
+
+        await createOrg({
+            ...form,
+            founded_year: form.founded_year
+                ? Number(form.founded_year)
+                : null,
+        });
+
+        setForm({
+            name: "",
+            industry: "",
+            headquarters: "",
+            founded_year: "",
+        });
+    };
+
+    if (loading) return <p>読み込み中...</p>;
+    if (error) return <p style={{ color: "red" }}>{error}</p>;
+
     return (
-        <div style={{ maxWidth: "350px" }}>
-            <h1>応募フォーム</h1>
+        <div>
 
-            <Input
-                placeholder="会社名"
-                value={companyName}
-                onChange={(e) => setCompanyName(e.target.value)}
-            />
+            <div style={{ marginBottom: 10 }}>
+                <Link to="/login">
+                    ← ログイン画面に戻る
+                </Link>
+            </div>
 
-            <Input
-                placeholder="職種"
-                value={jobTitle}
-                onChange={(e) => setJobTitle(e.target.value)}
-            />
+            <h1>会社情報の作成</h1>
 
-            <Button onClick={handleApply} disabled={loading}>
-                {loading ? "処理中..." : "応募する"}
-            </Button>
+            {/* =====================
+                作成フォーム
+            ===================== */}
+            <form onSubmit={handleSubmit}>
+                <input
+                    name="name"
+                    placeholder="会社名"
+                    value={form.name}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="industry"
+                    placeholder="業界"
+                    value={form.industry}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="headquarters"
+                    placeholder="本社"
+                    value={form.headquarters}
+                    onChange={handleChange}
+                />
+
+                <input
+                    name="founded_year"
+                    placeholder="設立年"
+                    value={form.founded_year}
+                    onChange={handleChange}
+                />
+
+                <button type="submit">作成</button>
+            </form>
+
+            {/* =====================
+                一覧（リンク化）
+            ===================== */}
+            <h2>会社一覧</h2>
+
+            <ul>
+                {orgs.map((org) => (
+                    <li key={org.id}>
+                        {/* 👇ここがポイント */}
+                        <Link to={`/organizations/${org.id}`}>
+                            {org.name}
+                        </Link>
+                    </li>
+                ))}
+            </ul>
         </div>
     );
 };

@@ -20,6 +20,6 @@ class Settings(BaseSettings):
     )
 
 
-@lru_cache
-def get_settings() -> Settings:
+@lru_cache#「Settings()を毎回作らず、最初の1回だけ作ってずっと再利用する」
+def get_settings() -> Settings:#無駄な生成が減る（軽いけど積もる）
     return Settings()

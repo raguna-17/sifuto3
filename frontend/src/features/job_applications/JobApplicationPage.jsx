@@ -1,132 +1,98 @@
 import { useEffect, useState } from "react";
-import Button from "../../components/Button";
-import Modal from "../../components/Modal";
-import Spinner from "../../components/Spinner";
+import { getMyApplications, updateApplicationStatus } from "./api";
 
-const API_URL = import.meta.env.VITE_API_URL;
-
-const JobApplicationPage = () => {
+export default function JobApplicationPage() {
     const [applications, setApplications] = useState([]);
-    const [loading, setLoading] = useState(false);
+    const [loading, setLoading] = useState(true);
+    const [updatingId, setUpdatingId] = useState(null);
 
-    const [deleteTarget, setDeleteTarget] = useState(null); // 削除対象
-    const token = localStorage.getItem("token");
+    useEffect(() => {
+        fetchData();
+    }, []);
 
-    const fetchApplications = async () => {
-        setLoading(true);
-
+    const fetchData = async () => {
         try {
-            const res = await fetch(`${API_URL}/job-applications`, {
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
-
-            const data = await res.json();
-
-            if (!res.ok || !Array.isArray(data)) {
-                setApplications([]);
-                return;
-            }
-
-            const sorted = [...data].sort(
-                (a, b) => new Date(b.created_at) - new Date(a.created_at)
-            );
-
-            setApplications(sorted);
-        } catch (err) {
-            console.error(err);
-            setApplications([]);
+            const data = await getMyApplications();
+            setApplications(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error(error);
+            alert("応募一覧の取得に失敗しました");
         } finally {
             setLoading(false);
         }
     };
 
-    useEffect(() => {
-        fetchApplications();
-    }, []);
-
-    const handleDelete = async (id) => {
+    const handleStatusChange = async (id, status) => {
         try {
-            await fetch(`${API_URL}/job-applications/${id}`, {
-                method: "DELETE",
-                headers: {
-                    Authorization: `Bearer ${token}`,
-                },
-            });
+            setUpdatingId(id);
 
-            setDeleteTarget(null);
-            fetchApplications();
-        } catch (err) {
-            console.error(err);
+            await updateApplicationStatus(id, { status });
+
+            const data = await getMyApplications();
+            setApplications(Array.isArray(data) ? data : []);
+        } catch (error) {
+            console.error(error);
+            alert("ステータス更新に失敗しました");
+        } finally {
+            setUpdatingId(null);
         }
     };
 
-    if (loading) return <Spinner />;
+    if (loading) return <p>読み込み中...</p>;
 
     return (
-        <div>
-            <h1>応募履歴</h1>
+        <div style={{ padding: 20 }}>
+            <h1>応募一覧</h1>
 
             {applications.length === 0 ? (
-                <p>応募なし</p>
+                <p>まだ応募はありません</p>
             ) : (
                 applications.map((app) => (
                     <div
                         key={app.id}
                         style={{
                             border: "1px solid #ddd",
-                            padding: "10px",
-                            marginBottom: "10px",
+                            padding: 12,
+                            marginBottom: 10,
+                            borderRadius: 6,
+                            background: "#fafafa",
                         }}
                     >
-                        <h3>{app.organization_name}</h3>
+                        <p>応募ID: {app.id}</p>
+                        <p>求人ID: {app.job_posting_id}</p>
 
-                        <p>職種: {app.job_title}</p>
+                        {/* ステータス変更 */}
+                        <p>
+                            ステータス:{" "}
+                            <select
+                                value={app.status}
+                                onChange={(e) =>
+                                    handleStatusChange(
+                                        app.id,
+                                        e.target.value
+                                    )
+                                }
+                                disabled={updatingId === app.id}
+                            >
+                                <option value="applied">応募中</option>
+                                <option value="accepted">採用</option>
+                                <option value="rejected">不採用</option>
+                            </select>
+                        </p>
 
                         <p>
                             応募日時:{" "}
-                            {app.created_at
-                                ? new Date(app.created_at).toLocaleString()
-                                : "不明"}
+                            {new Date(app.created_at).toLocaleString()}
                         </p>
 
-                        <Button
-                            onClick={() => setDeleteTarget(app)}
-                            variant="danger"
-                        >
-                            削除
-                        </Button>
+                        {updatingId === app.id && (
+                            <p style={{ color: "gray" }}>
+                                更新中...
+                            </p>
+                        )}
                     </div>
                 ))
             )}
-
-            {/* 削除確認モーダル */}
-            {deleteTarget && (
-                <Modal onClose={() => setDeleteTarget(null)}>
-                    <h3>削除しますか？</h3>
-
-                    <p>{deleteTarget.organization_name}</p>
-
-                    <div style={{ display: "flex", gap: "10px" }}>
-                        <Button
-                            variant="danger"
-                            onClick={() => handleDelete(deleteTarget.id)}
-                        >
-                            削除する
-                        </Button>
-
-                        <Button
-                            variant="secondary"
-                            onClick={() => setDeleteTarget(null)}
-                        >
-                            キャンセル
-                        </Button>
-                    </div>
-                </Modal>
-            )}
         </div>
     );
-};
-
-export default JobApplicationPage;
+}

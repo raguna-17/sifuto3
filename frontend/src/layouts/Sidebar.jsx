@@ -6,7 +6,7 @@ const Sidebar = () => {
     const menu = [
         { name: "ホーム", path: "/" },
         { name: "応募履歴", path: "/job-applications" },
-        { name: "求人応募", path: "/organizations" },
+        { name: "求人応募", path: "/job-postings" },
     ];
 
     return (

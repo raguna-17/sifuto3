@@ -2,6 +2,7 @@ from sqlalchemy import Column, Integer, String, Boolean, DateTime, func
 from sqlalchemy.orm import relationship
 from app.db import Base
 
+
 class User(Base):
     __tablename__ = "users"
 
@@ -15,5 +16,5 @@ class User(Base):
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
 
-    job_applications = relationship("JobApplication", back_populates="user")
-    organizations = relationship("Organization", back_populates="user")
+    job_postings=relationship("JobPosting", back_populates="user")
+    applications = relationship("JobApplication", back_populates="user")

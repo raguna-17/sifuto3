@@ -1,20 +1,53 @@
-const API_URL = import.meta.env.VITE_API_URL;
+import axios from "axios";
 
-export const createJobApplication = async (payload, token) => {
-    const res = await fetch(`${API_URL}/job-applications`, {
-        method: "POST",
-        headers: {
-            "Content-Type": "application/json",
-            Authorization: `Bearer ${token}`,
-        },
-        body: JSON.stringify(payload),
-    });
+const BASE_URL = import.meta.env.VITE_API_URL;
 
-    const data = await res.json();
+// 応募作成
+export const createJobApplication = async (data) => {
+    const token = localStorage.getItem("token");
 
-    if (!res.ok) {
-        throw new Error(data.detail || "Failed to create application");
-    }
+    const res = await axios.post(
+        `${BASE_URL}/job_applications/`,
+        data,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
 
-    return data;
+    return res.data;
+};
+
+// 自分の応募一覧
+export const getMyApplications = async () => {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.get(
+        `${BASE_URL}/job_applications/me`,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return res.data;
+};
+
+
+export const updateApplicationStatus = async (id, data) => {
+    const token = localStorage.getItem("token");
+
+    const res = await axios.put(
+        `${BASE_URL}/job_applications/${id}`,
+        data,
+        {
+            headers: {
+                Authorization: `Bearer ${token}`,
+            },
+        }
+    );
+
+    return res.data;
 };

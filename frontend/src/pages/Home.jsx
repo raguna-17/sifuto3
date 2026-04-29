@@ -10,7 +10,7 @@ const Home = () => {
                     <Link to="/job-applications">応募履歴</Link>
                 </li>
                 <li>
-                    <Link to="/organizations">求人応募</Link>
+                    <Link to="/job-postings">求人応募</Link>
                 </li>
             </ul>
         </div>
