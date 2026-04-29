@@ -1,17 +1,18 @@
 import { useEffect, useState } from "react";
-import { useParams, Link } from "react-router-dom";
+import { useParams, Link, useNavigate } from "react-router-dom";
 import axios from "axios";
 
 const API = import.meta.env.VITE_API_URL;
 
 const OrganizationDetail = () => {
     const { id } = useParams();
+    const navigate = useNavigate();
 
     const [org, setOrg] = useState(null);
     const [loading, setLoading] = useState(true);
     const [isEditing, setIsEditing] = useState(false);
+    const [isDeleting, setIsDeleting] = useState(false);
 
-    // 編集用フォーム
     const [form, setForm] = useState({
         name: "",
         industry: "",
@@ -24,17 +25,14 @@ const OrganizationDetail = () => {
     // =====================
     const fetchOrg = async () => {
         try {
-            const res = await axios.get(
-                `${API}/organizations/${id}`,
-                {
-                    headers: {
-                        Authorization: `Bearer ${localStorage.getItem("token")}`,
-                    },
-                }
-            );
+            const res = await axios.get(`${API}/organizations/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
 
             setOrg(res.data);
-            setForm(res.data); // 編集用にセット
+            setForm(res.data);
         } catch (err) {
             console.error(err);
         } finally {
@@ -47,7 +45,7 @@ const OrganizationDetail = () => {
     }, [id]);
 
     // =====================
-    // input変更
+    // 入力変更
     // =====================
     const handleChange = (e) => {
         setForm({
@@ -57,7 +55,7 @@ const OrganizationDetail = () => {
     };
 
     // =====================
-    // 更新処理（PATCH）
+    // 更新
     // =====================
     const handleUpdate = async () => {
         try {
@@ -70,8 +68,6 @@ const OrganizationDetail = () => {
                         ? Number(form.founded_year)
                         : null,
             };
-
-            console.log("PATCH PAYLOAD:", payload);
 
             const res = await axios.patch(
                 `${API}/organizations/${id}`,
@@ -90,6 +86,28 @@ const OrganizationDetail = () => {
         }
     };
 
+    // =====================
+    // 削除（確認なし）
+    // =====================
+    const handleDelete = async () => {
+        if (isDeleting) return;
+
+        setIsDeleting(true);
+
+        try {
+            await axios.delete(`${API}/organizations/${id}`, {
+                headers: {
+                    Authorization: `Bearer ${localStorage.getItem("token")}`,
+                },
+            });
+
+            navigate("/organizations");
+        } catch (err) {
+            console.error("DELETE ERROR:", err.response?.data || err);
+            setIsDeleting(false);
+        }
+    };
+
     if (loading) return <p>読み込み中...</p>;
     if (!org) return <p>データなし</p>;
 
@@ -97,9 +115,6 @@ const OrganizationDetail = () => {
         <div>
             <h1>会社詳細</h1>
 
-            {/* =====================
-                表示モード
-            ===================== */}
             {!isEditing ? (
                 <div>
                     <h2>{org.name}</h2>
@@ -110,11 +125,20 @@ const OrganizationDetail = () => {
                     <button onClick={() => setIsEditing(true)}>
                         編集
                     </button>
+
+                    <button
+                        onClick={handleDelete}
+                        disabled={isDeleting}
+                        style={{
+                            marginLeft: "10px",
+                            backgroundColor: "red",
+                            color: "white",
+                        }}
+                    >
+                        {isDeleting ? "削除中..." : "削除"}
+                    </button>
                 </div>
             ) : (
-                /* =====================
-                    編集モード
-                ===================== */
                 <div>
                     <h2>編集</h2>
 
@@ -149,10 +173,8 @@ const OrganizationDetail = () => {
                 </div>
             )}
 
-            {/* =====================
-                戻る
-            ===================== */}
             <br />
+
             <Link to="/organizations">
                 ← 一覧へ戻る
             </Link>

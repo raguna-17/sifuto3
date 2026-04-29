@@ -67,15 +67,13 @@ export default function JobApplicationPage() {
                             <select
                                 value={app.status}
                                 onChange={(e) =>
-                                    handleStatusChange(
-                                        app.id,
-                                        e.target.value
-                                    )
+                                    handleStatusChange(app.id, e.target.value)
                                 }
-                                disabled={updatingId === app.id}
+                               
                             >
                                 <option value="applied">応募中</option>
-                                <option value="accepted">採用</option>
+                                <option value="interview">面接中</option>   {/* 追加 */}
+                                <option value="offer">内定</option>        {/* 修正 */}
                                 <option value="rejected">不採用</option>
                             </select>
                         </p>

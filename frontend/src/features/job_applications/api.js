@@ -39,7 +39,7 @@ export const getMyApplications = async () => {
 export const updateApplicationStatus = async (id, data) => {
     const token = localStorage.getItem("token");
 
-    const res = await axios.put(
+    const res = await axios.put(   // ←ここ変更
         `${BASE_URL}/job_applications/${id}`,
         data,
         {

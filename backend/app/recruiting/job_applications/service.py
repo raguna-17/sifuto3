@@ -109,6 +109,9 @@ async def update_application_status(
     )
     job = result.scalars().first()
 
+    if job is None:
+        raise HTTPException(404, "JobPosting not found")
+
     if job.user_id != current_user.id:
         raise HTTPException(403, "Not authorized")
 

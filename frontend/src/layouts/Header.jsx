@@ -17,7 +17,7 @@ export default function Header() {
             padding: "10px 0",   // ヘッダー内の上下余白
             borderBottom: "1px solid #ccc"  // ヘッダーと本文の視覚的区切り
         }}>
-            <h1>kyuujin</h1>
+            <h1>求人アプリ</h1>
             <button onClick={handleLogout} style={{ cursor: "pointer" }}>
                 ログアウト
             </button>
