@@ -1,5 +1,5 @@
 import pytest
-from httpx import AsyncClient
+from httpx import AsyncClient,ASGITransport
 
 from app.main import app
 
@@ -19,13 +19,15 @@ ME_URL = "/users/me"
 
 @pytest.mark.asyncio
 async def test_register_success():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
-        res = await ac.post(REGISTER_URL, json={
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+        response = await ac.post(REGISTER_URL, json={
             "email": "test@example.com",
             "password": "password123"
         })
 
-    assert res.status_code == 200
+    assert response.status_code == 200
     data = res.json()
     assert data["email"] == "test@example.com"
     assert "id" in data
