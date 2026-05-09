@@ -10,3 +10,8 @@ pydantic[email]
 pydantic-settings
 alembic
 python-multipart
+
+pytest
+pytest-asyncio
+pytest-cov
+httpx
