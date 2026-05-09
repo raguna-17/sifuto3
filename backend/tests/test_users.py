@@ -1,9 +1,8 @@
 import pytest
 
 
-@pytest.mark.asyncio
-async def test_register_success(client):
-    response = await client.post("/users/register", json={
+def test_register_success(client):
+    response = client.post("/users/register", json={
         "email": "test@example.com",
         "password": "password123"
     })
@@ -14,14 +13,13 @@ async def test_register_success(client):
     assert "id" in data
 
 
-@pytest.mark.asyncio
-async def test_register_duplicate_email(client):
-    await client.post("/users/register", json={
+def test_register_duplicate_email(client):
+    client.post("/users/register", json={
         "email": "dup@example.com",
         "password": "password123"
     })
 
-    res = await client.post("/users/register", json={
+    res = client.post("/users/register", json={
         "email": "dup@example.com",
         "password": "password123"
     })
@@ -30,14 +28,13 @@ async def test_register_duplicate_email(client):
     assert res.json()["detail"] == "Email already registered"
 
 
-@pytest.mark.asyncio
-async def test_login_success(client):
-    await client.post("/users/register", json={
+def test_login_success(client):
+    client.post("/users/register", json={
         "email": "login@example.com",
         "password": "password123"
     })
 
-    res = await client.post("/users/login", json={
+    res = client.post("/users/login", json={
         "email": "login@example.com",
         "password": "password123"
     })
@@ -50,14 +47,13 @@ async def test_login_success(client):
     assert data["token_type"] == "bearer"
 
 
-@pytest.mark.asyncio
-async def test_login_invalid_password(client):
-    await client.post("/users/register", json={
+def test_login_invalid_password(client):
+    client.post("/users/register", json={
         "email": "wrongpass@example.com",
         "password": "password123"
     })
 
-    res = await client.post("/users/login", json={
+    res = client.post("/users/login", json={
         "email": "wrongpass@example.com",
         "password": "wrongpassword"
     })
@@ -66,21 +62,20 @@ async def test_login_invalid_password(client):
     assert res.json()["detail"] == "Invalid credentials"
 
 
-@pytest.mark.asyncio
-async def test_me_success(client):
-    await client.post("/users/register", json={
+def test_me_success(client):
+    client.post("/users/register", json={
         "email": "me@example.com",
         "password": "password123"
     })
 
-    login_res = await client.post("/users/login", json={
+    login_res = client.post("/users/login", json={
         "email": "me@example.com",
         "password": "password123"
     })
 
     token = login_res.json()["access_token"]
 
-    res = await client.get(
+    res = client.get(
         "/users/me",
         headers={"Authorization": f"Bearer {token}"}
     )
@@ -89,7 +84,6 @@ async def test_me_success(client):
     assert res.json()["email"] == "me@example.com"
 
 
-@pytest.mark.asyncio
-async def test_me_unauthorized(client):
-    res = await client.get("/users/me")
+def test_me_unauthorized(client):
+    res = client.get("/users/me")
     assert res.status_code == 401
