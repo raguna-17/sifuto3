@@ -26,28 +26,58 @@ jobs:
           --health-cmd="pg_isready -U testuser"
           --health-interval=5s
           --health-timeout=5s
-          --health-retries=9
+          --health-retries=10
 
     env:
       DATABASE_URL: postgresql+asyncpg://testuser:testpass@localhost:5432/testdb
-      SECRET_KEY: testsecrethghggugugyy
+      SECRET_KEY: testsecretkey
+      JWT_ALGORITHM: HS256
+      ACCESS_TOKEN_EXPIRE_MINUTES: 30
+      REFRESH_TOKEN_EXPIRE_DAYS: 7
+      PYTHONPATH: .
 
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout code
+        uses: actions/checkout@v4
 
+      # -------------------------
+      # Python setup
+      # -------------------------
       - name: Set up Python
         uses: actions/setup-python@v5
         with:
           python-version: "3.11"
+          cache: "pip"
 
+      # -------------------------
+      # Dependencies install
+      # -------------------------
       - name: Install dependencies
         run: |
+          python -m pip install --upgrade pip
           pip install -r requirements.txt
-          pip install  pytest-cov pytest-asyncio httpx
+          pip install pytest pytest-asyncio pytest-cov httpx
 
+      # -------------------------
+      # Wait for DB (重要）
+      # -------------------------
+      - name: Wait for PostgreSQL
+        run: |
+          until pg_isready -h localhost -U testuser; do
+            echo "Waiting for postgres..."
+            sleep 2
+          done
 
+      # -------------------------
+      # Migrations
+      # -------------------------
       - name: Run migrations
-        run: alembic upgrade head
+        run: |
+          alembic upgrade head
 
-      - name: Run tests
-        run: pytest 
+      # -------------------------
+      # Tests
+      # -------------------------
+      - name: Run tests with coverage
+        run: |
+          pytest 
