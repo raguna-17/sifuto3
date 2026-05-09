@@ -6,12 +6,6 @@ from app.main import app
 from app.db.session import get_db, AsyncSessionLocal
 
 
-@pytest.fixture
-def event_loop():
-    loop = asyncio.new_event_loop()
-    yield loop
-    loop.close()
-
 
 async def override_get_db():
     async with AsyncSessionLocal() as session:
@@ -29,5 +23,8 @@ def override_dependencies():
 async def client():
     transport = ASGITransport(app=app)
 
-    async with AsyncClient(transport=transport, base_url="http://test") as ac:
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as ac:
         yield ac
