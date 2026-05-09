@@ -24,3 +24,14 @@ async def client():
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+'''
+今回の原因を一文で言うなら：
+
+pytest-asyncio が作る複数event loop間で、SQLAlchemy async connection poolを共有していた
+
+そして修正は：
+
+テスト環境では NullPool にして connection を使い回さない
+'''
