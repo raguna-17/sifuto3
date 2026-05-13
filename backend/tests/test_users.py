@@ -37,7 +37,7 @@ async def test_register_duplicate_email(client):
         }
     )
 
-    assert res.status_code == 400
+    assert res.status_code == 409
     assert res.json()["detail"] == "Email already registered"
 
 
