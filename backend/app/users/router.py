@@ -31,7 +31,7 @@ async def register(
 
     if error:
         raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+            status_code=status.HTTP_409_CONFLICT,
             detail=error,
         )
 
