@@ -31,7 +31,7 @@ async def register(
 
     if error:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error,
         )
 
@@ -57,7 +57,7 @@ async def login(
 
     if error:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_401_UNAUTHORIZED,
             detail=error,
         )
 
