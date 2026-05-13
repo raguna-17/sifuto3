@@ -3,38 +3,41 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 # -------------------------
-# base
+# 共通
 # -------------------------
 
-class IncomeBase(BaseModel):
-    title: str = Field(min_length=1, max_length=255)
-    amount: int = Field(gt=0)
+class OrderBase(BaseModel):
+    product_id: int
+    quantity: int = Field(ge=1)
 
 
 # -------------------------
-# create
+# 作成
 # -------------------------
 
-class IncomeCreate(IncomeBase):
+class OrderCreate(OrderBase):
     pass
 
 
 # -------------------------
-# update
+# 更新（ステータス変更用）
 # -------------------------
 
-class IncomeUpdate(BaseModel):
-    title: str | None = Field(default=None, min_length=1, max_length=255)
-    amount: int | None = Field(default=None, gt=0)
+class OrderUpdate(BaseModel):
+    status: str
 
 
 # -------------------------
-# response
+# レスポンス
 # -------------------------
 
-class IncomeResponse(IncomeBase):
+class OrderResponse(BaseModel):
     id: int
     user_id: int
+    product_id: int
+    quantity: int
+    total_price: int
+    status: str
     created_at: datetime
 
     model_config = ConfigDict(from_attributes=True)

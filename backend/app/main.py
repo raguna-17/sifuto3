@@ -1,30 +1,33 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+
 import app.db.imports
+
 from app.core.config import get_settings
 
 from app.users.router import router as user_router
 
-from app.finance.categories.router import (
-    router as category_router,
+from app.modules.product.router import (
+    router as product_router,
 )
 
-from app.finance.expenses.router import (
-    router as expense_router,
+from app.modules.cart.router import (
+    router as cart_router,
 )
 
-
-from app.finance.incomes.router import (
-    router as income_router,
+from app.modules.order.router import (
+    router as order_router,
 )
-
-
 
 settings = get_settings()
 
+app = FastAPI(
+    title="EC API",
+)
 
-app = FastAPI()
-
+# -------------------------
+# CORS
+# -------------------------
 
 app.add_middleware(
     CORSMiddleware,
@@ -34,11 +37,14 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+# -------------------------
+# routers
+# -------------------------
 
 app.include_router(user_router)
 
-app.include_router(category_router)
+app.include_router(product_router)
 
-app.include_router(expense_router)
+app.include_router(cart_router)
 
-app.include_router(income_router)
+app.include_router(order_router)

@@ -13,9 +13,10 @@ from app.db.base import Base
 
 # models import
 from app.users import model
-from app.finance.categories import model
-from app.finance.expenses import model
-from app.finance.incomes import model
+
+from app.modules.product import model
+from app.modules.cart import model
+from app.modules.order import model
 
 
 settings = get_settings()

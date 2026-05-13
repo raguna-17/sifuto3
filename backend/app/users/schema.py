@@ -1,5 +1,8 @@
 from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
+
+from app.core.enums import UserRole
 
 
 # -------------------------
@@ -42,7 +45,7 @@ class UserUpdate(BaseModel):
 
 class UserResponse(UserBase):
     id: int
-    role: str
+    role: UserRole
     is_active: bool
     created_at: datetime
     updated_at: datetime
@@ -50,17 +53,7 @@ class UserResponse(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
 
-# -------------------------
-# auth tokens
-# -------------------------
-
 class Token(BaseModel):
     access_token: str
-    refresh_token: str | None = None
+    refresh_token: str
     token_type: str = "bearer"
-
-
-class TokenPayload(BaseModel):
-    sub: str
-    exp: int
-    type: str  # access / refresh を区別するため追加

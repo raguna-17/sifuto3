@@ -1,24 +1,11 @@
 from datetime import datetime
-from enum import Enum
 
 from sqlalchemy import String, DateTime, func
-from sqlalchemy.orm import Mapped, mapped_column, relationship
-
+from sqlalchemy.orm import Mapped, mapped_column,relationship
+from typing import List
 from app.db.base import Base
+from app.core.enums import UserRole
 
-
-# -------------------------
-# role
-# -------------------------
-
-class UserRole(str, Enum):
-    USER = "user"
-    ADMIN = "admin"
-
-
-# -------------------------
-# model
-# -------------------------
 
 class User(Base):
     __tablename__ = "users"
@@ -37,15 +24,15 @@ class User(Base):
         nullable=False,
     )
 
-    role: Mapped[str] = mapped_column(
+    role: Mapped[UserRole] = mapped_column(
         String(20),
         nullable=False,
-        default=UserRole.USER.value,
+        default=UserRole.USER,
     )
 
     is_active: Mapped[bool] = mapped_column(
-        default=True,
         nullable=False,
+        default=True,
     )
 
     created_at: Mapped[datetime] = mapped_column(
@@ -61,24 +48,14 @@ class User(Base):
         nullable=False,
     )
 
-    # -------------------------
-    # relations
-    # -------------------------
-
-    categories = relationship(
-        "Category",
+    carts: Mapped[List["Cart"]] = relationship(
+        "Cart",
         back_populates="user",
-        cascade="all, delete-orphan",
     )
 
-    expenses = relationship(
-        "Expense",
+    orders: Mapped[List["Order"]] = relationship(
+        "Order",
         back_populates="user",
-        cascade="all, delete-orphan",
     )
 
-    incomes = relationship(
-        "Income",
-        back_populates="user",
-        cascade="all, delete-orphan",
-    )
+    
