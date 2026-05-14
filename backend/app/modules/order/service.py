@@ -1,6 +1,7 @@
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.modules.order import repository
+from app.modules.product.repository import get_product_by_id
 from app.modules.order.model import Order
 
 
@@ -13,8 +14,14 @@ async def create_order(
     user_id: int,
     product_id: int,
     quantity: int,
-    total_price: int,
 ):
+    product = await get_product_by_id(db, product_id)
+
+    if not product:
+        return None
+
+    total_price = product.price * quantity
+
     order = Order(
         user_id=user_id,
         product_id=product_id,
@@ -23,7 +30,11 @@ async def create_order(
         status="pending",
     )
 
-    return await repository.create_order(db, order)
+    db.add(order)
+    await db.commit()
+    await db.refresh(order)
+
+    return order
 
 
 # -------------------------

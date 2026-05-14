@@ -1,47 +1,54 @@
 import api from "../../api/axios";
 
-// ログイン
-export const login = async (email, password) => {
-    try {
-        const res = await api.post("/users/login", {
+
+// -------------------------
+// login
+// -------------------------
+
+export const login = async (
+    email,
+    password
+) => {
+    const response = await api.post(
+        "/users/login",
+        {
             email,
             password,
-        });
+        }
+    );
 
-        return res.data;
-
-    } catch (err) {
-        throw new Error(
-            err.response?.data?.detail || "ログイン失敗"
-        );
-    }
+    return response.data;
 };
 
-// 新規登録
-export const register = async (email, password) => {
-    try {
-        const res = await api.post("/users/register", {
+
+// -------------------------
+// register
+// -------------------------
+
+export const register = async (
+    email,
+    password
+) => {
+    const response = await api.post(
+        "/users/register",
+        {
             email,
             password,
-        });
+        }
+    );
 
-        return res.data;
-
-    } catch (err) {
-        throw new Error(
-            err.response?.data?.detail || "登録失敗"
-        );
-    }
+    return response.data;
 };
 
-// 現在ユーザー取得
+
+// -------------------------
+// current user
+// -------------------------
+
 export const getMe = async () => {
-    try {
-        const res = await api.get("/users/me");
+    const response = await api.get(
+        "/users/me"
+    );
 
-        return res.data;
-
-    } catch (err) {
-        throw new Error("ユーザー取得失敗");
-    }
+    return response.data;
 };

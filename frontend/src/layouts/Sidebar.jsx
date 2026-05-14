@@ -1,69 +1,30 @@
-import { Link, useLocation } from "react-router-dom";
+import { Link } from "react-router-dom";
 
 const Sidebar = () => {
-    const location = useLocation();
-
     const menu = [
-        { name: "ホーム", path: "/" },
-        { name: "支出管理", path: "/expenses" },
-        { name: "収入管理", path: "/incomes" },
-        { name: "カテゴリ管理", path: "/categories" },
+        { name: "商品一覧", path: "/products" },
+        { name: "商品作成", path: "/products/create" },
+        { name: "カート", path: "/cart" },
+        { name: "注文履歴", path: "/orders" },
     ];
 
     return (
-        <div style={styles.sidebar}>
-            <h2 style={styles.title}>家計簿アプリ</h2>
+        <aside className="sidebar">
+            <h2 className="sidebar-title">ECサイト</h2>
 
-            <nav>
-                {menu.map((item) => {
-                    const isActive = location.pathname === item.path;
-
-                    return (
-                        <Link
-                            key={item.path}
-                            to={item.path}
-                            style={{
-                                ...styles.link,
-                                ...(isActive ? styles.active : {}),
-                            }}
-                        >
-                            {item.name}
-                        </Link>
-                    );
-                })}
+            <nav className="sidebar-nav">
+                {menu.map((item) => (
+                    <Link
+                        key={item.path}
+                        to={item.path}
+                        className="sidebar-link"
+                    >
+                        {item.name}
+                    </Link>
+                ))}
             </nav>
-        </div>
+        </aside>
     );
-};
-
-const styles = {
-    sidebar: {
-        width: "220px",
-        height: "100vh",
-        background: "#1e293b",
-        color: "#fff",
-        padding: "20px",
-        boxSizing: "border-box",
-    },
-    title: {
-        marginBottom: "24px",
-        fontSize: "22px",
-        fontWeight: "bold",
-    },
-    link: {
-        display: "block",
-        padding: "12px",
-        color: "#cbd5e1",
-        textDecoration: "none",
-        borderRadius: "8px",
-        marginBottom: "10px",
-        transition: "0.2s",
-    },
-    active: {
-        background: "#3b82f6",
-        color: "#fff",
-        fontWeight: "bold",
-    },
 };
 
 export default Sidebar;

@@ -1,102 +1,153 @@
-家計簿管理アプリ（Full Stack）
-■ 概要
+# EC Backend + Frontend Project
 
-本アプリケーションは、支出・収入・カテゴリを分離設計したフルスタック家計簿管理システムです。
-React + FastAPI によるAPI分離構成を採用し、JWT認証・ドメイン駆動的なレイヤー分割（router / service / repository）で実装しています。
+FastAPI + React を使用したシンプルなECサイトサンプルです。  
+ユーザー認証、商品管理、カート機能、注文機能を備えています。
 
-■ 技術スタック
-Frontend
-React
-Vite
-React Router
-Axios
-Backend
-FastAPI
-SQLAlchemy
-Alembic
-Pydantic
-JWT認証（OAuth2 Password Flow）
-Database
-PostgreSQL
-Infrastructure
-Docker / Docker Compose
-Testing
-pytest
-■ アーキテクチャ設計
-フロントエンド設計
-featureベースディレクトリ構成
-API層とUI層の分離
-再利用可能な共通コンポーネント設計（Button / Input / Modal）
-バックエンド設計
-ドメイン単位でモジュール分割（users / finance）
-router / service / repository の責務分離
-ビジネスロジックをservice層に集約
-DBアクセスをrepository層に分離
-設計思想
-関心の分離（Separation of Concerns）
-スケーラビリティを意識した構造設計
-フロント・バックエンド完全分離構成
-■ 主な機能
-認証
-ユーザー登録
-JWTログイン認証
-ユーザー状態管理
-支出管理
-支出CRUD
-カテゴリ紐付け
-一覧取得
-収入管理
-収入CRUD
-一覧取得
-カテゴリ管理
-カテゴリCRUD
-■ API設計
+---
 
-RESTful APIを採用し、リソース単位で設計。
+## 技術スタック
 
-Auth
-POST /auth/register
-POST /auth/login
-Expenses
-GET /expenses
-POST /expenses
-PUT /expenses/{id}
-DELETE /expenses/{id}
-Incomes
-GET /incomes
-POST /incomes
-PUT /incomes/{id}
-DELETE /incomes/{id}
-Categories
-GET /categories
-POST /categories
-■ セットアップ
-Backend
-pip install -r requirements.txt
+### Backend
+- FastAPI
+- SQLAlchemy (Async)
+- PostgreSQL / SQLite
+- JWT認証 (python-jose)
+- Passlib (argon2)
+
+### Frontend
+- React (Vite)
+- Axios
+- React Router
+
+---
+
+## 機能一覧
+
+### 認証
+- ユーザー登録
+- ログイン
+- JWT認証
+
+### 商品
+- 商品一覧取得
+- 商品詳細取得
+- 商品作成（管理用想定）
+
+### カート
+- カート追加
+- 数量変更
+- 削除
+- カート全削除
+- カート取得
+
+### 注文
+- カート内容から注文作成
+- 注文履歴取得
+- 注文詳細取得
+- 注文キャンセル（pendingのみ）
+
+---
+
+## システム構成
+
+### カート → 注文フロー
+
+カートに入っている商品をもとに注文を作成します。
+
+フロントエンドから以下の流れで処理されます：
+
+1. カート取得 (`GET /cart/`)
+2. 注文作成 (`POST /orders/`)
+3. カート削除 (`DELETE /cart/`)
+4. 注文一覧へ遷移 (`GET /orders/`)
+
+---
+
+## API仕様
+
+### 認証
+- `POST /users/register`
+- `POST /users/login`
+
+---
+
+### カート
+- `GET /cart/`
+- `POST /cart/`
+- `PATCH /cart/{product_id}`
+- `DELETE /cart/{product_id}`
+- `DELETE /cart/`
+
+---
+
+### 注文
+- `POST /orders/`
+- `GET /orders/`
+- `GET /orders/{order_id}`
+- `DELETE /orders/{order_id}`
+
+#### 管理用
+- `GET /orders/admin/all`
+- `PATCH /orders/admin/{order_id}/status`
+- `DELETE /orders/admin/{order_id}`
+
+---
+
+## 注文作成仕様
+
+注文作成時はサーバー側で以下を計算します：
+
+- 商品価格取得
+- quantity × price による total_price計算
+- user_idをJWTから取得
+- statusは `pending`
+
+フロント側は `product_id` と `quantity` のみ送信します。
+
+---
+
+## 認証仕様
+
+JWTトークンを使用しています。
+
+- アクセストークン: localStorage に保存
+- Authorizationヘッダーに付与
+
+---
+
+## データ設計概要
+
+### Order
+- id
+- user_id
+- product_id
+- quantity
+- total_price
+- status
+- created_at
+
+---
+
+## 注意事項
+
+- カートはユーザーごとに管理されます
+- 注文作成後もカートは自動削除されません（フロント側で削除）
+- MVP構成のため在庫管理・決済機能は未実装です
+
+---
+
+## 今後の改善ポイント
+
+- カート→注文のバルクAPI化
+- 在庫管理
+- 支払いフロー追加
+- トランザクション管理強化
+- OrderItemテーブル分離（正規化）
+
+---
+
+## 起動方法
+
+### Backend
+```bash
 uvicorn app.main:app --reload
-Frontend
-npm install
-npm run dev
-Docker
-docker-compose up --build
-■ 環境変数
-DATABASE_URL=postgresql://user:password@localhost:5432/dbname
-SECRET_KEY=your_secret_key
-ALGORITHM=HS256
-■ 工夫した点（ここ重要）
-ビジネスロジックをservice層へ分離
-DBアクセスをrepository層で統一管理
-feature単位でフロントを分割し保守性を向上
-JWT認証によるセキュアなAPI設計
-フロントとバックの完全分離構成
-■ 改善予定
-月次収支グラフの可視化
-カテゴリ別支出分析
-集計ダッシュボード追加
-本番環境デプロイ（Render / Railway / AWS）
-■ 採用観点でのポイント
-API設計とレイヤー分割の理解
-フルスタック構成の実装経験
-認証機構の実装経験
-Dockerによる開発環境構築
-スケーラブルなディレクトリ設計

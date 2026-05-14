@@ -24,15 +24,17 @@ async def create_order(
     db: AsyncSession = Depends(get_db),
     user = Depends(get_current_user),
 ):
-    # ここで本来は product価格取得して total_price計算するべきだが
-    # MVPなのでserviceに丸投げ前提
-    return await service.create_order(
+    order = await service.create_order(
         db=db,
         user_id=user.id,
         product_id=payload.product_id,
         quantity=payload.quantity,
-        total_price=0,  # ←本来は計算必須（後で改善ポイント）
     )
+
+    if not order:
+        raise HTTPException(status_code=404, detail="Product not found")
+
+    return order
 
 
 # -------------------------

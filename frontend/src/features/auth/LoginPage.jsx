@@ -1,16 +1,41 @@
 import { useState } from "react";
-import { useNavigate, Link } from "react-router-dom";
 
-import { login, getMe } from "./api";
+import {
+    useNavigate,
+    Link,
+} from "react-router-dom";
+
+import {
+    login,
+    getMe,
+} from "./api";
+
+import Input from "../../components/Input";
+import Button from "../../components/Button";
+import Spinner from "../../components/Spinner";
+
+const TOKEN_KEY = "token";
+const REFRESH_KEY = "refresh";
+const USER_KEY = "user";
 
 const LoginPage = () => {
     const navigate = useNavigate();
 
-    const [email, setEmail] = useState("");
-    const [password, setPassword] = useState("");
+    const [email, setEmail] =
+        useState("");
 
-    const [error, setError] = useState("");
-    const [loading, setLoading] = useState(false);
+    const [password, setPassword] =
+        useState("");
+
+    const [error, setError] =
+        useState("");
+
+    const [loading, setLoading] =
+        useState(false);
+
+    // -------------------------
+    // validate
+    // -------------------------
 
     const validate = () => {
         if (!email || !password) {
@@ -28,6 +53,10 @@ const LoginPage = () => {
         return "";
     };
 
+    // -------------------------
+    // submit
+    // -------------------------
+
     const handleSubmit = async (e) => {
         e.preventDefault();
 
@@ -43,28 +72,45 @@ const LoginPage = () => {
         try {
             setLoading(true);
 
-            const data = await login(email, password);
+            // login
+            const data = await login(
+                email,
+                password
+            );
 
+            // token save
             localStorage.setItem(
-                "token",
+                TOKEN_KEY,
                 data.access_token
             );
 
-            if (data.refresh_token) {
-                localStorage.setItem(
-                    "refresh",
-                    data.refresh_token
-                );
-            }
+            localStorage.setItem(
+                REFRESH_KEY,
+                data.refresh_token
+            );
 
+            // current user
             const me = await getMe();
 
-            console.log("ログインユーザー:", me);
+            localStorage.setItem(
+                USER_KEY,
+                JSON.stringify(me)
+            );
 
+            console.log(
+                "ログインユーザー:",
+                me
+            );
+
+            // home
             navigate("/");
 
         } catch (err) {
-            setError(err.message);
+            setError(
+                err.response?.data?.detail ||
+                err.message ||
+                "ログイン失敗"
+            );
 
         } finally {
             setLoading(false);
@@ -72,64 +118,51 @@ const LoginPage = () => {
     };
 
     return (
-        <div
-            style={{
-                maxWidth: "400px",
-                margin: "80px auto",
-            }}
-        >
+        <div>
             <h1>ログイン</h1>
 
             {error && (
-                <p style={{ color: "red" }}>
-                    {error}
-                </p>
+                <p>{error}</p>
             )}
 
             <form onSubmit={handleSubmit}>
-                <div style={{ marginBottom: "12px" }}>
-                    <input
+                <div>
+                    <Input
                         type="email"
                         placeholder="メールアドレス"
                         value={email}
                         onChange={(e) =>
-                            setEmail(e.target.value)
+                            setEmail(
+                                e.target.value
+                            )
                         }
-                        style={{
-                            width: "100%",
-                            padding: "10px",
-                        }}
                     />
                 </div>
 
-                <div style={{ marginBottom: "12px" }}>
-                    <input
+                <div>
+                    <Input
                         type="password"
                         placeholder="パスワード"
                         value={password}
                         onChange={(e) =>
-                            setPassword(e.target.value)
+                            setPassword(
+                                e.target.value
+                            )
                         }
-                        style={{
-                            width: "100%",
-                            padding: "10px",
-                        }}
                     />
                 </div>
 
-                <button
+                <Button
                     type="submit"
                     disabled={loading}
-                    style={{
-                        width: "100%",
-                        padding: "10px",
-                    }}
                 >
-                    {loading ? "ログイン中..." : "ログイン"}
-                </button>
+                    {loading
+                        ? <Spinner />
+                        : "ログイン"}
+                </Button>
             </form>
 
-            <p style={{ marginTop: "16px" }}>
+            <p>
                 アカウントがない？
                 {" "}
                 <Link to="/register">

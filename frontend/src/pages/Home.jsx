@@ -1,59 +1,100 @@
 import { Link } from "react-router-dom";
 
-const styles = {
-    container: {
-        padding: "20px",
-        textAlign: "center",
-    },
-    title: {
-        fontSize: "28px",
-        marginBottom: "10px",
-    },
-    description: {
-        color: "#555",
-        marginBottom: "20px",
-    },
-    cardContainer: {
-        display: "flex",
-        gap: "15px",
-        justifyContent: "center",
-        flexWrap: "wrap",
-    },
-    card: {
-        display: "block",
-        padding: "15px",
-        width: "200px",
-        textDecoration: "none",
-        border: "1px solid #ddd",
-        borderRadius: "8px",
-        color: "#333",
-    },
+import Button from "../components/Button";
+import Spinner from "../components/Spinner";
+
+
+const cardStyle = {
+    display: "flex",
+    flexDirection: "column",
+    gap: "10px",
+    padding: "20px",
+    width: "220px",
+    border: "1px solid #ddd",
+    borderRadius: "10px",
+    backgroundColor: "#fff",
+    boxShadow: "0 2px 5px rgba(0,0,0,0.1)",
 };
 
-const Home = () => {
-    return (
-        <div style={styles.container}>
-            <h1 style={styles.title}>家計簿ダッシュボード</h1>
 
-            <p style={styles.description}>
-                支出・収入・カテゴリを管理できます。
+const Home = () => {
+
+    const loading = false;
+
+    if (loading) {
+        return <Spinner />;
+    }
+
+    return (
+        <div
+            style={{
+                padding: "20px",
+                textAlign: "center",
+            }}
+        >
+            <h1>ECサイト ダッシュボード</h1>
+
+            <p>
+                商品・カート・注文を管理できます。
             </p>
 
-            <div style={styles.cardContainer}>
-                <Link to="/expenses" style={styles.card}>
-                    <h2>支出管理</h2>
-                    <p>支出の登録・一覧表示</p>
-                </Link>
+            <div
+                style={{
+                    display: "flex",
+                    gap: "20px",
+                    justifyContent: "center",
+                    flexWrap: "wrap",
+                    marginTop: "30px",
+                }}
+            >
 
-                <Link to="/incomes" style={styles.card}>
-                    <h2>収入管理</h2>
-                    <p>収入の登録・一覧表示</p>
-                </Link>
+                {/* 商品一覧 */}
+                <div style={cardStyle}>
+                    <h2>商品一覧</h2>
 
-                <Link to="/categories" style={styles.card}>
-                    <h2>カテゴリ管理</h2>
-                    <p>カテゴリの追加・編集</p>
-                </Link>
+                    <p>
+                        商品の閲覧・追加・編集
+                    </p>
+
+                    <Link to="/products">
+                        <Button>
+                            商品を見る
+                        </Button>
+                    </Link>
+                </div>
+
+
+                {/* カート */}
+                <div style={cardStyle}>
+                    <h2>カート</h2>
+
+                    <p>
+                        カート内の商品確認
+                    </p>
+
+                    <Link to="/cart">
+                        <Button>
+                            カートへ
+                        </Button>
+                    </Link>
+                </div>
+
+
+                {/* 注文履歴 */}
+                <div style={cardStyle}>
+                    <h2>注文履歴</h2>
+
+                    <p>
+                        注文一覧・購入履歴確認
+                    </p>
+
+                    <Link to="/orders">
+                        <Button>
+                            注文履歴を見る
+                        </Button>
+                    </Link>
+                </div>
+
             </div>
         </div>
     );

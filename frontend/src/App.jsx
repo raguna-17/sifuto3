@@ -1,4 +1,9 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 
 import Layout from "./layouts/Layout";
 
@@ -7,29 +12,71 @@ import RegisterPage from "./features/auth/RegisterPage";
 
 import Home from "./pages/Home";
 
-import ExpensePage from "./features/expenses/ExpensePage";
-import IncomePage from "./features/incomes/IncomePage";
-import CategoryPage from "./features/categories/CategoryPage";
+// products
+import ProductListPage from "./features/products/pages/ProductListPage";
+import ProductDetailPage from "./features/products/pages/ProductDetailPage";
+import ProductCreatePage from "./features/products/pages/ProductCreatePage";
 
-// 仮の認証チェック
+// cart
+import CartPage from "./features/cart/CartPage";
+
+// orders
+import OrderPage from "./features/orders/OrderPage";
+
+
+// -------------------------
+// auth check
+// -------------------------
+
 const isAuthenticated = () => {
-  return !!localStorage.getItem("token");
+  return !!localStorage.getItem(
+    "token"
+  );
 };
 
-// 認証ガード
-const PrivateRoute = ({ children }) => {
-  return isAuthenticated() ? children : <Navigate to="/login" />;
+
+// -------------------------
+// private route
+// -------------------------
+
+const PrivateRoute = ({
+  children,
+}) => {
+  return isAuthenticated()
+    ? children
+    : (
+      <Navigate
+        to="/login"
+        replace
+      />
+    );
 };
+
 
 function App() {
   return (
     <BrowserRouter>
       <Routes>
-        {/* ログイン関連 */}
-        <Route path="/login" element={<LoginPage />} />
-        <Route path="/register" element={<RegisterPage />} />
 
-        {/* 認証後ページ */}
+        {/* -------------------------
+            public
+        ------------------------- */}
+
+        <Route
+          path="/login"
+          element={<LoginPage />}
+        />
+
+        <Route
+          path="/register"
+          element={<RegisterPage />}
+        />
+
+
+        {/* -------------------------
+            private
+        ------------------------- */}
+
         <Route
           path="/"
           element={
@@ -38,21 +85,70 @@ function App() {
             </PrivateRoute>
           }
         >
-          {/* ホーム */}
-          <Route index element={<Home />} />
 
-          {/* 支出 */}
-          <Route path="expenses" element={<ExpensePage />} />
+          {/* home */}
+          <Route
+            index
+            element={<Home />}
+          />
 
-          {/* 収入 */}
-          <Route path="incomes" element={<IncomePage />} />
 
-          {/* カテゴリ */}
-          <Route path="categories" element={<CategoryPage />} />
+          {/* -------------------------
+              products
+          ------------------------- */}
+
+          <Route
+            path="products"
+            element={<ProductListPage />}
+          />
+
+          <Route
+            path="products/create"
+            element={<ProductCreatePage />}
+          />
+
+          <Route
+            path="products/:id"
+            element={<ProductDetailPage />}
+          />
+
+
+          {/* -------------------------
+              cart
+          ------------------------- */}
+
+          <Route
+            path="cart"
+            element={<CartPage />}
+          />
+
+
+          {/* -------------------------
+              orders
+          ------------------------- */}
+
+          <Route
+            path="orders"
+            element={<OrderPage />}
+          />
+
         </Route>
 
-        {/* 存在しないURL */}
-        <Route path="*" element={<Navigate to="/" />} />
+
+        {/* -------------------------
+            not found
+        ------------------------- */}
+
+        <Route
+          path="*"
+          element={
+            <Navigate
+              to="/"
+              replace
+            />
+          }
+        />
+
       </Routes>
     </BrowserRouter>
   );
