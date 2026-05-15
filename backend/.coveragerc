@@ -2,6 +2,5 @@
 show_missing = True
 precision = 1
 omit =
-    app/recruiting/job_postings/*
-    app/recruiting/organizations/*
+    app/modules/cart/*
     
