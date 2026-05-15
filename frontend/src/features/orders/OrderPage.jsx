@@ -5,73 +5,51 @@ import {
     cancelOrder,
 } from "./api";
 
-
 export default function OrderPage() {
 
     const [orders, setOrders] = useState([]);
     const [loading, setLoading] = useState(true);
 
-
     // -------------------------
     // 注文取得
     // -------------------------
-
     const fetchOrders = async () => {
-
         try {
             const data = await getOrders();
             setOrders(data);
-
         } catch (error) {
             console.error(error);
-
         } finally {
             setLoading(false);
         }
     };
 
-
     useEffect(() => {
         fetchOrders();
     }, []);
 
-
     // -------------------------
     // キャンセル
     // -------------------------
-
     const handleCancel = async (orderId) => {
-
-        const ok = window.confirm(
-            "注文をキャンセルしますか？"
-        );
-
+        const ok = window.confirm("注文をキャンセルしますか？");
         if (!ok) return;
 
         try {
             await cancelOrder(orderId);
 
             setOrders((prev) =>
-                prev.filter(
-                    (order) => order.id !== orderId
-                )
+                prev.filter((order) => order.id !== orderId)
             );
-
         } catch (error) {
             console.error(error);
-
-            alert(
-                error.response?.data?.detail ||
-                "キャンセル失敗"
-            );
+            alert(error.response?.data?.detail || "キャンセル失敗");
         }
     };
-
 
     if (loading) {
         return <p>Loading...</p>;
     }
-
 
     return (
         <div>
@@ -89,44 +67,48 @@ export default function OrderPage() {
                             marginBottom: "16px",
                         }}
                     >
+                        <p>注文ID: {order.id}</p>
+
+                        <p>ステータス: {order.status}</p>
+
+                        <p>合計金額: ¥{order.total_price}</p>
 
                         <p>
-                            注文ID:
-                            {order.id}
+                            注文日時:{" "}
+                            {new Date(order.created_at).toLocaleString()}
                         </p>
 
-                        <p>
-                            商品ID:
-                            {order.product_id}
-                        </p>
+                        {/* -------------------------
+                            注文明細（ここが重要）
+                        ------------------------- */}
+                        <div style={{ marginTop: "12px" }}>
+                            <p>商品一覧:</p>
 
-                        <p>
-                            数量:
-                            {order.quantity}
-                        </p>
+                            {order.items?.map((item) => (
+                                <div
+                                    key={item.id}
+                                    style={{
+                                        paddingLeft: "12px",
+                                        marginBottom: "6px",
+                                    }}
+                                >
+                                    <p>商品ID: {item.product_id}</p>
+                                    <p>数量: {item.quantity}</p>
+                                    <p>
+                                        単価: ¥{item.price_at_purchase}
+                                    </p>
+                                </div>
+                            ))}
+                        </div>
 
-                        <p>
-                            合計金額:
-                            ¥{order.total_price}
-                        </p>
-
-                        <p>
-                            ステータス:
-                            {order.status}
-                        </p>
-
-                        <p>
-                            注文日時:
-                            {new Date(
-                                order.created_at
-                            ).toLocaleString()}
-                        </p>
-
+                        {/* キャンセルボタン */}
                         {order.status === "pending" && (
                             <button
-                                onClick={() =>
-                                    handleCancel(order.id)
-                                }
+                                onClick={() => handleCancel(order.id)}
+                                style={{
+                                    marginTop: "12px",
+                                    padding: "8px 12px",
+                                }}
                             >
                                 キャンセル
                             </button>

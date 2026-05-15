@@ -25,14 +25,14 @@ export const getOrderDetail = async (orderId) => {
 // 注文作成
 // -------------------------
 
-export const createOrder = async (
-    productId,
-    quantity
-) => {
-
+export const createOrder = async (productId, quantity) => {
     const response = await api.post("/orders/", {
-        product_id: productId,
-        quantity,
+        items: [
+            {
+                product_id: productId,
+                quantity,
+            },
+        ],
     });
 
     return response.data;
