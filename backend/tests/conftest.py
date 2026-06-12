@@ -23,7 +23,7 @@ def override_dependencies():
 @pytest.fixture
 async def client():
     async with AsyncClient(
-        transport=ASGITransport(app=app),
+        transport=ASGITransport(app=app, lifespan="on"),
         base_url="http://test",
     ) as ac:
         yield ac
