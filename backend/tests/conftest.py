@@ -24,3 +24,8 @@ async def client():
         base_url="http://test",
     ) as ac:
         yield ac
+
+
+@pytest.fixture(scope="session")
+def anyio_backend():
+    return "asyncio"
