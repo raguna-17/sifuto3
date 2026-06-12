@@ -29,7 +29,8 @@ async def client():
         yield ac
 
 
+'''
 @pytest.fixture(scope="session")
 def anyio_backend():
     return "asyncio"
-
+'''

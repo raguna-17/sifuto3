@@ -12,6 +12,7 @@ alembic
 python-multipart
 
 pytest
-pytest-asyncio
+pytest-anyio
+anyio
 pytest-cov
 httpx
