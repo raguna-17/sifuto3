@@ -34,7 +34,7 @@ jobs:
       JWT_ALGORITHM: HS256
       ACCESS_TOKEN_EXPIRE_MINUTES: 30
       REFRESH_TOKEN_EXPIRE_DAYS: 7
-      PYTHONPATH: .
+      PYTHONPATH: backend
 
     steps:
       - name: Checkout code
@@ -80,4 +80,4 @@ jobs:
       # -------------------------
       - name: Run tests with coverage
         run: |
-          python -m pytest
+          python -m pytest -p pytest_anyio
