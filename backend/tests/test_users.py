@@ -11,7 +11,7 @@ async def test_register_success(client):
         }
     )
 
-    assert response.status_code == 200
+    assert response.status_code == 201
 
     data = response.json()
 
@@ -37,7 +37,7 @@ async def test_register_duplicate_email(client):
         }
     )
 
-    assert res.status_code == 409
+    assert res.status_code == 400
     assert res.json()["detail"] == "Email already registered"
 
 
