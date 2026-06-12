@@ -5,9 +5,9 @@ from app.main import app
 from app.db.session import get_db, SessionFactory
 
 
-pytestmark = pytest.mark.anyio
-
-
+# =========================
+# DB override
+# =========================
 async def override_get_db():
     async with SessionFactory() as session:
         yield session
@@ -20,17 +20,18 @@ def override_dependencies():
     app.dependency_overrides.clear()
 
 
+# =========================
+# HTTP client
+# =========================
 @pytest.fixture
-async def client():
-    async with AsyncClient(
+def client():
+    return AsyncClient(
         transport=ASGITransport(app=app, lifespan="on"),
         base_url="http://test",
-    ) as ac:
-        yield ac
+    )
 
 
-'''
-@pytest.fixture(scope="session")
-def anyio_backend():
-    return "asyncio"
-'''
+# =========================
+# pytest async mode
+# =========================
+pytestmark = pytest.mark.anyio
