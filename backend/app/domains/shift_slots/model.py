@@ -14,19 +14,19 @@ from app.db.base import Base
 
 class ShiftSlot(Base):
     """
-    シフト枠（需要側）
-    例：
-      2026-06-10 10:00-14:00 / ホール2人
+    シフト枠�E�需要�E�E�E
+    例！E
+      2026-06-10 10:00-14:00 / ホ�Eル2人
     """
 
     __tablename__ = "shift_slots"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    # 対象日（運用単位）
+    # 対象日�E�運用単位！E
     target_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
 
-    # 正規化：日時にする（重要）
+    # 正規化�E�日時にする�E�重要E��E
     start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 

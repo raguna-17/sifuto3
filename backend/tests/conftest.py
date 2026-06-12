@@ -5,6 +5,9 @@ from app.main import app
 from app.db.session import get_db, SessionFactory
 
 
+pytestmark = pytest.mark.anyio
+
+
 async def override_get_db():
     async with SessionFactory() as session:
         yield session

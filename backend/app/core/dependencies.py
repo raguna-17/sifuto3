@@ -100,7 +100,7 @@ AdminUser = Annotated[
     Depends(require_roles(UserRole.ADMIN)),
 ]
 
-# よく使うなら追加可能
+# よく使ぁE��ら追加可能
 # StaffUser = Annotated[
 #     User,
 #     Depends(require_roles(UserRole.STAFF)),

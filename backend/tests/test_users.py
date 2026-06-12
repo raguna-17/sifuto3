@@ -1,7 +1,7 @@
 import pytest
 
 
-@pytest.mark.asyncio
+
 async def test_register_success(client):
     response = await client.post(
         "/users/register",
@@ -19,7 +19,7 @@ async def test_register_success(client):
     assert "id" in data
 
 
-@pytest.mark.asyncio
+
 async def test_register_duplicate_email(client):
     await client.post(
         "/users/register",
@@ -41,7 +41,7 @@ async def test_register_duplicate_email(client):
     assert res.json()["detail"] == "Email already registered"
 
 
-@pytest.mark.asyncio
+
 async def test_login_success(client):
     await client.post(
         "/users/register",
@@ -68,7 +68,7 @@ async def test_login_success(client):
     assert data["token_type"] == "bearer"
 
 
-@pytest.mark.asyncio
+
 async def test_login_invalid_password(client):
     await client.post(
         "/users/register",
@@ -90,7 +90,7 @@ async def test_login_invalid_password(client):
     assert res.json()["detail"] == "Invalid credentials"
 
 
-@pytest.mark.asyncio
+
 async def test_me_success(client):
     await client.post(
         "/users/register",
@@ -121,7 +121,7 @@ async def test_me_success(client):
     assert res.json()["email"] == "me@example.com"
 
 
-@pytest.mark.asyncio
+
 async def test_me_unauthorized(client):
     res = await client.get("/users/me")
 
