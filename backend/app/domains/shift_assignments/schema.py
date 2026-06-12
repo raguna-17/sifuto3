@@ -1,4 +1,4 @@
-from pydantic import (
+﻿from pydantic import (
     BaseModel,
     ConfigDict,
 )
@@ -34,3 +34,4 @@ class ShiftAssignmentResponse(
     model_config = ConfigDict(
         from_attributes=True
     )
+

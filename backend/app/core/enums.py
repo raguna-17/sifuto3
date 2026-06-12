@@ -1,4 +1,4 @@
-from enum import Enum
+﻿from enum import Enum
 
 
 class UserRole(str, Enum):
@@ -22,4 +22,5 @@ class PreferencePriority(str,Enum):
 class ShiftStatus(str, Enum):
     CONFIRMED = "confirmed"
     CANCELED = "canceled"
+
 

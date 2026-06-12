@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 from sqlalchemy import (
     Boolean,
@@ -78,3 +78,4 @@ class ShiftAssignment(Base):
         "ShiftSlot",
         back_populates="assignments",
     )
+

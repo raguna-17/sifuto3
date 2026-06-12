@@ -1,4 +1,4 @@
-from sqlalchemy import ForeignKey, Date, DateTime, Enum, Text, func
+﻿from sqlalchemy import ForeignKey, Date, DateTime, Enum, Text, func
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
 from app.db.base import Base
@@ -22,7 +22,7 @@ class ShiftPreference(Base):
         index=True,
     )
 
-    # ☁E��一�E�datetimeに寁E��る！Elotと一致させる！E
+    # atetimelot
     start_at: Mapped[DateTime | None] = mapped_column(
         DateTime(timezone=True),
         nullable=True,
@@ -33,17 +33,17 @@ class ShiftPreference(Base):
         nullable=True,
     )
 
-    # 優先度
+    # 
     priority: Mapped[PreferencePriority] = mapped_column(
         Enum(PreferencePriority),
         default=PreferencePriority.PREFERRED,
         nullable=False,
     )
 
-    # 補足
+    # 
     note: Mapped[str | None] = mapped_column(Text, nullable=True)
 
-    # 監査
+    # 
     created_at: Mapped[DateTime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -62,3 +62,4 @@ class ShiftPreference(Base):
         "User",
         back_populates="preferences",
     )
+

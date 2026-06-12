@@ -1,4 +1,4 @@
-from fastapi import FastAPI
+﻿from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 from app.core.config import get_settings
@@ -41,4 +41,5 @@ app.include_router(shift_slot_requirements_router)
 app.include_router(shift_preferences_router)
 
 app.include_router(shift_assignments_router)
+
 

@@ -1,4 +1,4 @@
-from logging.config import fileConfig
+ï»¿from logging.config import fileConfig
 
 from sqlalchemy import pool
 from sqlalchemy.engine import Connection
@@ -10,7 +10,7 @@ from app.core.config import get_settings
 from app.db.base import Base
 
 # =========================
-# ãƒ¢ãƒEƒ«èª­ã¿è¾¼ã¿Eˆé‡è¦E¼E
+# 
 # =========================
 from app.domains.users.model import User
 
@@ -88,3 +88,4 @@ else:
     import asyncio
 
     asyncio.run(run_migrations_online())
+

@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -155,3 +155,4 @@ async def deactivate_position(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Position not found",
         )
+

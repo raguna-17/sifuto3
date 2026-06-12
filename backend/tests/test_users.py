@@ -1,4 +1,4 @@
-import pytest
+﻿import pytest
 
 
 
@@ -126,3 +126,4 @@ async def test_me_unauthorized(client):
     res = await client.get("/users/me")
 
     assert res.status_code == 401
+

@@ -1,4 +1,4 @@
-from pydantic import (
+﻿from pydantic import (
     BaseModel,
     ConfigDict,
     Field,
@@ -38,3 +38,4 @@ class ShiftSlotRequirementResponse(
     model_config = ConfigDict(
         from_attributes=True
     )
+

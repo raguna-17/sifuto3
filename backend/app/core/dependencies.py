@@ -1,4 +1,4 @@
-from typing import Annotated, Callable
+﻿from typing import Annotated, Callable
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -70,7 +70,7 @@ def require_roles(*allowed_roles: UserRole):
         user: User = Depends(get_current_user),
     ) -> User:
 
-        # adminは常に全許可
+        # admin
         if user.role == UserRole.ADMIN:
             return user
 
@@ -100,8 +100,9 @@ AdminUser = Annotated[
     Depends(require_roles(UserRole.ADMIN)),
 ]
 
-# よく使ぁE��ら追加可能
+# 
 # StaffUser = Annotated[
 #     User,
 #     Depends(require_roles(UserRole.STAFF)),
 # ]
+

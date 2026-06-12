@@ -1,4 +1,4 @@
-from fastapi import (
+ï»¿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -43,7 +43,7 @@ async def create_preference(
     try:
         return await ShiftPreferenceService.create(
             db=db,
-            user_id=current_user.id,  # â†ã“ã“ãEæ®‹ã™Eˆæ­£ã—ã„EE
+            user_id=current_user.id,  # 
             preference_in=preference_in,
         )
 
@@ -151,3 +151,4 @@ async def delete_preference(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Preference not found",
         )
+

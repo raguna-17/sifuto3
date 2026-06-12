@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -99,3 +99,4 @@ async def get_me(
     current_user: CurrentUser,
 ):
     return current_user
+

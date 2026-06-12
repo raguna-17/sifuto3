@@ -1,4 +1,4 @@
-from datetime import datetime,date
+﻿from datetime import datetime,date
 from pydantic import BaseModel, ConfigDict
 
 
@@ -21,3 +21,4 @@ class ShiftSlotResponse(ShiftSlotBase):
     id: int
 
     model_config = ConfigDict(from_attributes=True)
+

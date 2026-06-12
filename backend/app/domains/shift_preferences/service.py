@@ -1,4 +1,4 @@
-from sqlalchemy import select
+﻿from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.users.model import User
@@ -148,3 +148,4 @@ class ShiftPreferenceService:
         except Exception:
             await db.rollback()
             raise
+

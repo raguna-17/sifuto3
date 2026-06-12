@@ -1,4 +1,4 @@
-from datetime import datetime, timedelta, timezone
+﻿from datetime import datetime, timedelta, timezone
 from typing import Any
 
 from jose import JWTError, jwt
@@ -102,3 +102,4 @@ def decode_token(
 
     except JWTError as exc:
         raise ValueError("Invalid token") from exc
+

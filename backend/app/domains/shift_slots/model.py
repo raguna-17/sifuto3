@@ -1,4 +1,4 @@
-from datetime import date,datetime
+﻿from datetime import date,datetime
 
 from sqlalchemy import (
     Date,
@@ -12,25 +12,20 @@ from sqlalchemy.orm import relationship, Mapped, mapped_column
 from app.db.base import Base
 
 
-class ShiftSlot(Base):
-    """
-    シフト枠�E�需要�E�E�E
-    例！E
-      2026-06-10 10:00-14:00 / ホ�Eル2人
-    """
+class ShiftSlot(Base):#2026-06-10 10:00-14:00 / 2
 
     __tablename__ = "shift_slots"
 
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
-    # 対象日�E�運用単位！E
+    # E
     target_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
 
-    # 正規化�E�日時にする�E�重要E��E
+    # EEE
     start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
 
-    # 監査
+    # 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -59,3 +54,4 @@ class ShiftSlot(Base):
         back_populates="slot",
         cascade="all, delete-orphan",
     )
+

@@ -1,4 +1,4 @@
-"""add user_id to shift_preferences
+﻿"""add user_id to shift_preferences
 
 Revision ID: ea2a6147db9a
 Revises: 70700a8a663d
@@ -34,3 +34,4 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_shift_preferences_user_id'), table_name='shift_preferences')
     op.drop_column('shift_preferences', 'user_id')
     # ### end Alembic commands ###
+

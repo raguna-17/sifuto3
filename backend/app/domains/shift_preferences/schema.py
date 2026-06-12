@@ -1,4 +1,4 @@
-from datetime import date, datetime
+﻿from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.enums import PreferencePriority
@@ -40,3 +40,4 @@ class ShiftPreferenceResponse(ShiftPreferenceBase):
     user_id: int
 
     model_config = ConfigDict(from_attributes=True)
+

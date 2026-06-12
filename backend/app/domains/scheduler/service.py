@@ -1,4 +1,4 @@
-from sqlalchemy import select
+﻿from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.shift_slots.model import ShiftSlot
@@ -26,7 +26,7 @@ class SchedulerService:
         for slot in slots:
 
             # =========================
-            # 1. 忁E��人数取征E
+            # 1. 
             # =========================
             requirements = await db.scalars(
                 select(ShiftSlotRequirement).where(
@@ -36,7 +36,7 @@ class SchedulerService:
             requirements = list(requirements)
 
             # =========================
-            # 2. 希望一覧取征E
+            # 2. 
             # =========================
             preferences = await db.scalars(
                 select(ShiftPreference).where(
@@ -46,7 +46,7 @@ class SchedulerService:
             preferences = list(preferences)
 
             # =========================
-            # 3. 優先度ソーチE
+            # 3. 
             # =========================
             def priority_value(p: ShiftPreference):
                 return {
@@ -60,7 +60,7 @@ class SchedulerService:
             preferences.sort(key=priority_value)
 
             # =========================
-            # 4. 割当�E琁E
+            # 4. 
             # =========================
             for req in requirements:
 
@@ -77,7 +77,7 @@ class SchedulerService:
                     if pref.priority == PreferencePriority.AVOID:
                         continue
 
-                    # 既に同slotで割当済みならスキチE�E
+                    # lot
                     exists = await db.scalar(
                         select(ShiftAssignment).where(
                             ShiftAssignment.slot_id == slot.id,
@@ -106,3 +106,4 @@ class SchedulerService:
             await db.refresh(a)
 
         return created_assignments
+

@@ -1,4 +1,4 @@
-from pydantic import BaseModel, ConfigDict
+﻿from pydantic import BaseModel, ConfigDict
 
 
 # -------------------------
@@ -33,3 +33,4 @@ class PositionResponse(PositionBase):
     is_active: bool
 
     model_config = ConfigDict(from_attributes=True)
+

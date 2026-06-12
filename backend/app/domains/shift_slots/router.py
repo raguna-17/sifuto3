@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -151,3 +151,4 @@ async def delete_shift_slot(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Shift slot not found",
         )
+

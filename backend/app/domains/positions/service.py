@@ -1,4 +1,4 @@
-from sqlalchemy import select
+﻿from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.positions.model import Position
@@ -149,3 +149,4 @@ class PositionService:
         except Exception:
             await db.rollback()
             raise
+

@@ -1,4 +1,4 @@
-"""init
+﻿"""init
 
 Revision ID: 70700a8a663d
 Revises: 
@@ -120,3 +120,4 @@ def downgrade() -> None:
     op.drop_index(op.f('ix_positions_name'), table_name='positions')
     op.drop_table('positions')
     # ### end Alembic commands ###
+

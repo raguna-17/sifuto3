@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -152,3 +152,4 @@ async def delete_assignment(
             status_code=404,
             detail="Assignment not found",
         )
+

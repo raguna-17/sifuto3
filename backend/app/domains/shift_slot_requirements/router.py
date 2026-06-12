@@ -1,4 +1,4 @@
-from fastapi import (
+﻿from fastapi import (
     APIRouter,
     Depends,
     HTTPException,
@@ -134,3 +134,4 @@ async def delete_requirement(
             status_code=404,
             detail="Requirement not found",
         )
+

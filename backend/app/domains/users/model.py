@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 
 from sqlalchemy import (
     DateTime,
@@ -17,7 +17,7 @@ from app.core.enums import UserRole
 
 
 # ==================================================
-# 中間テーブル�E�Eser ⇁EPosition�E�E
+# ser Position
 # ==================================================
 user_positions = Table(
     "user_positions",
@@ -90,3 +90,4 @@ class User(Base):
         secondary=user_positions,
         back_populates="users",
     )
+
