@@ -1,4 +1,4 @@
-﻿from datetime import date, datetime
+from datetime import date, datetime
 from pydantic import BaseModel, ConfigDict, Field
 
 from app.core.enums import PreferencePriority

@@ -1,4 +1,4 @@
-﻿from sqlalchemy import select
+from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.domains.shift_slots.model import ShiftSlot

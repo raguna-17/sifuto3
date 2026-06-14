@@ -1,10 +1,10 @@
-﻿import pytest
+import pytest
 
 
 # ==================================================
 # register
 # ==================================================
-@pytest.mark.asyncio
+
 async def test_register_success(client):
     res = await client.post(
         "/users/register",
@@ -22,7 +22,7 @@ async def test_register_success(client):
 # ==================================================
 # register duplicate
 # ==================================================
-@pytest.mark.asyncio
+
 async def test_register_duplicate(client):
     await client.post(
         "/users/register",
@@ -47,7 +47,7 @@ async def test_register_duplicate(client):
 # ==================================================
 # login success
 # ==================================================
-@pytest.mark.asyncio
+
 async def test_login_success(client):
     await client.post(
         "/users/register",
@@ -75,7 +75,7 @@ async def test_login_success(client):
 # ==================================================
 # login fail
 # ==================================================
-@pytest.mark.asyncio
+
 async def test_login_fail(client):
     res = await client.post(
         "/users/login",
@@ -92,7 +92,7 @@ async def test_login_fail(client):
 # ==================================================
 # me endpoint
 # ==================================================
-@pytest.mark.asyncio
+
 async def test_me(client):
     res = await client.get("/users/me")
 

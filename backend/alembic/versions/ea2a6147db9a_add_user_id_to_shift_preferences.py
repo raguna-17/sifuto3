@@ -1,4 +1,4 @@
-﻿"""add user_id to shift_preferences
+"""add user_id to shift_preferences
 
 Revision ID: ea2a6147db9a
 Revises: 70700a8a663d
