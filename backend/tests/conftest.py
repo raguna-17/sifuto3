@@ -1,12 +1,7 @@
 ﻿import pytest
 from httpx import AsyncClient, ASGITransport
 from app.main import app
-from app.db.session import get_db, SessionFactory
-
-
-async def override_get_db():
-    async with SessionFactory() as session:
-        yield session
+from app.db.session import get_db, SessionFactory, engine
 
 
 @pytest.fixture(autouse=True)
@@ -17,11 +12,23 @@ def override_dependencies():
 
 
 @pytest.fixture
-def client():
-    return AsyncClient(
+async def client():
+    async with AsyncClient(
         transport=ASGITransport(app=app),
         base_url="http://test",
-    )
+    ) as client:
+        yield client
 
 
-#pytestmark = pytest.mark.anyio
+@pytest.fixture(scope="session", autouse=True)
+async def dispose_engine():
+    yield
+    await engine.dispose()
+
+
+async def override_get_db():
+    async with SessionFactory() as session:
+        try:
+            yield session
+        finally:
+            await session.close()
