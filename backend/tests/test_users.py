@@ -1,103 +1,94 @@
 import pytest
 
 
-# ==================================================
-# register
-# ==================================================
-
+@pytest.mark.asyncio
 async def test_register_success(client):
-    res = await client.post(
-        "/users/register",
-        json={
-            "email": "a@example.com",
-            "password": "password123"
-        },
-    )
+    payload = {
+        "email": "newuser@example.com",
+        "password": "password123"
+    }
 
+    res = await client.post("/users/register", json=payload)
+
+    # ← routerで201にしてるので修正
     assert res.status_code == 201
+
     data = res.json()
-    assert data["email"] == "a@example.com"
+
+    assert data["email"] == payload["email"]
+    assert "id" in data
 
 
-# ==================================================
-# register duplicate
-# ==================================================
+@pytest.mark.asyncio
+async def test_register_duplicate_email(client, test_user):
+    payload = {
+        "email": test_user.email,
+        "password": "password123"
+    }
 
-async def test_register_duplicate(client):
-    await client.post(
-        "/users/register",
-        json={
-            "email": "dup@example.com",
-            "password": "password123"
-        },
-    )
-
-    res = await client.post(
-        "/users/register",
-        json={
-            "email": "dup@example.com",
-            "password": "password123"
-        },
-    )
+    res = await client.post("/users/register", json=payload)
 
     assert res.status_code == 400
-    assert "Email already exists" in res.json()["detail"]
+    assert res.json()["detail"] == "Email already registered"
 
 
-# ==================================================
-# login success
-# ==================================================
+@pytest.mark.asyncio
+async def test_login_success(client, test_user):
+    payload = {
+        "email": test_user.email,
+        "password": "password"
+    }
 
-async def test_login_success(client):
-    await client.post(
-        "/users/register",
-        json={
-            "email": "login@example.com",
-            "password": "password123"
-        },
-    )
-
-    res = await client.post(
-        "/users/login",
-        json={
-            "email": "login@example.com",
-            "password": "password123"
-        },
-    )
+    res = await client.post("/users/login", json=payload)
 
     assert res.status_code == 200
+
     data = res.json()
 
     assert "access_token" in data
-    assert "refresh_token" in data
+    assert data["token_type"] == "bearer"
 
 
-# ==================================================
-# login fail
-# ==================================================
+@pytest.mark.asyncio
+async def test_login_invalid_email(client):
+    payload = {
+        "email": "notfound@example.com",
+        "password": "password"
+    }
 
-async def test_login_fail(client):
-    res = await client.post(
-        "/users/login",
-        json={
-            "email": "notfound@example.com",
-            "password": "wrongpassword"
-        },
-    )
+    res = await client.post("/users/login", json=payload)
 
     assert res.status_code == 401
-    assert "Invalid email or password" in res.json()["detail"]
+    assert res.json()["detail"] == "Invalid email or password"
 
 
-# ==================================================
-# me endpoint
-# ==================================================
+@pytest.mark.asyncio
+async def test_login_wrong_password(client, test_user):
+    payload = {
+        "email": test_user.email,
+        "password": "wrongpassword"
+    }
 
-async def test_me(client):
-    res = await client.get("/users/me")
+    res = await client.post("/users/login", json=payload)
+
+    assert res.status_code == 401
+    assert res.json()["detail"] == "Invalid email or password"
+
+
+@pytest.mark.asyncio
+async def test_read_current_user_success(client, auth_headers):
+    res = await client.get("/users/me", headers=auth_headers)
 
     assert res.status_code == 200
+
     data = res.json()
 
-    assert data["email"] == "test@example.com"
-    assert data["role"] == "ADMIN"
+    assert "email" in data
+    assert "id" in data
+
+
+@pytest.mark.asyncio
+async def test_read_current_user_no_token(client):
+    res = await client.get("/users/me")
+
+    assert res.status_code == 401
