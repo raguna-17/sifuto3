@@ -1,5 +1,5 @@
 ﻿import os
-
+import pytest_asyncio
 import pytest
 from argon2 import PasswordHasher
 from httpx import ASGITransport, AsyncClient
@@ -34,20 +34,7 @@ TestingSessionLocal = async_sessionmaker(
 )
 
 
-@pytest.fixture(scope="session", autouse=True)
-async def setup_database():
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.create_all)
-
-    yield
-
-    async with engine.begin() as conn:
-        await conn.run_sync(Base.metadata.drop_all)
-
-    await engine.dispose()
-
-
-@pytest.fixture
+@pytest_asyncio.fixture
 async def db_session():
     async with engine.connect() as connection:
 
@@ -66,7 +53,7 @@ async def db_session():
             await transaction.rollback()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def client(db_session):
 
     async def override_get_db():
@@ -85,7 +72,7 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def test_user(db_session):
 
     user = User(
@@ -103,7 +90,7 @@ async def test_user(db_session):
     return user
 
 
-@pytest.fixture
+@pytest_asyncio.fixture
 async def auth_headers(test_user):
 
     token = create_access_token(
