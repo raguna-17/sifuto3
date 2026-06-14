@@ -2,7 +2,7 @@
 import asyncio
 import os
 
-from httpx import AsyncClient
+from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -83,7 +83,12 @@ app.dependency_overrides[get_current_user] = override_current_user
 # ==================================================
 @pytest.fixture
 async def client():
-    async with AsyncClient(app=app, base_url="http://test") as ac:
+    transport = ASGITransport(app=app)
+
+    async with AsyncClient(
+        transport=transport,
+        base_url="http://test",
+    ) as ac:
         yield ac
 
 
