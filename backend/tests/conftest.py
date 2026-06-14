@@ -19,13 +19,20 @@ from app.core.security import create_access_token
 
 
 ph = PasswordHasher()
-
 DATABASE_URL = os.getenv("DATABASE_URL")
 
-engine = create_async_engine(
-    DATABASE_URL,
-    future=True,
-)
+
+@pytest_asyncio.fixture(scope="session")
+async def engine():
+
+    engine = create_async_engine(
+        DATABASE_URL,
+        future=True,
+    )
+
+    yield engine
+
+    await engine.dispose()
 
 TestingSessionLocal = async_sessionmaker(
     bind=engine,
@@ -35,7 +42,8 @@ TestingSessionLocal = async_sessionmaker(
 
 
 @pytest_asyncio.fixture
-async def db_session():
+async def db_session(engine):
+
     async with engine.connect() as connection:
 
         transaction = await connection.begin()
