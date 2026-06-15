@@ -5,6 +5,7 @@ from sqlalchemy import (
     DateTime,
     Enum,
     ForeignKey,
+    UniqueConstraint,
     func,
 )
 from sqlalchemy.orm import (
@@ -20,11 +21,17 @@ from app.core.enums import ShiftStatus
 class ShiftAssignment(Base):
     __tablename__ = "shift_assignments"
 
+    # =========================
+    # identity
+    # =========================
     id: Mapped[int] = mapped_column(
         primary_key=True,
         index=True,
     )
 
+    # =========================
+    # relations
+    # =========================
     user_id: Mapped[int] = mapped_column(
         ForeignKey("users.id"),
         nullable=False,
@@ -37,6 +44,9 @@ class ShiftAssignment(Base):
         index=True,
     )
 
+    # =========================
+    # metadata
+    # =========================
     is_auto: Mapped[bool] = mapped_column(
         Boolean,
         default=True,
@@ -44,14 +54,14 @@ class ShiftAssignment(Base):
     )
 
     status: Mapped[ShiftStatus] = mapped_column(
-        Enum(
-            ShiftStatus,
-            name="shift_status",
-        ),
-        default=ShiftStatus.CONFIRMED,
+        Enum(ShiftStatus, name="shift_status"),
         nullable=False,
+        default=ShiftStatus.CONFIRMED,
     )
 
+    # =========================
+    # timestamps
+    # =========================
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -65,10 +75,20 @@ class ShiftAssignment(Base):
         nullable=False,
     )
 
-    # ==================================================
-    # relationships
-    # ==================================================
+    # =========================
+    # constraints（重要）
+    # =========================
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "slot_id",
+            name="uq_user_slot_assignment",
+        ),
+    )
 
+    # =========================
+    # relationships
+    # =========================
     user = relationship(
         "User",
         back_populates="assignments",
@@ -78,4 +98,3 @@ class ShiftAssignment(Base):
         "ShiftSlot",
         back_populates="assignments",
     )
-

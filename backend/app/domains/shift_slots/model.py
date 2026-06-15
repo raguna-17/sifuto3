@@ -1,31 +1,51 @@
-from datetime import date,datetime
+﻿from datetime import datetime
 
 from sqlalchemy import (
-    Date,
     DateTime,
     Integer,
     func,
-    ForeignKey,
+    Enum,
 )
-from sqlalchemy.orm import relationship, Mapped, mapped_column
+from app.core.enums import PositionType
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.db.base import Base
 
 
-class ShiftSlot(Base):#2026-06-10 10:00-14:00 / 2
-
+class ShiftSlot(Base):
     __tablename__ = "shift_slots"
 
-    id: Mapped[int] = mapped_column(primary_key=True, index=True)
+    id: Mapped[int] = mapped_column(
+        primary_key=True,
+        index=True,
+    )
 
-    # E
-    target_date: Mapped[date] = mapped_column(Date, nullable=False, index=True)
+    start_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+        index=True,
+    )
 
-    # EEE
-    start_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
-    end_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
+    end_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True),
+        nullable=False,
+    )
 
-    # 
+    required_staff_count: Mapped[int] = mapped_column(
+        Integer,
+        nullable=False,
+        default=1,
+    )
+
+    required_position: Mapped[PositionType] = mapped_column(
+        Enum(PositionType),
+        nullable=False,
+    )
+
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),
         server_default=func.now(),
@@ -39,19 +59,14 @@ class ShiftSlot(Base):#2026-06-10 10:00-14:00 / 2
         nullable=False,
     )
 
-    # ==================================================
-    # relationships
-    # ==================================================
-
     assignments = relationship(
         "ShiftAssignment",
         back_populates="slot",
         cascade="all, delete-orphan",
     )
 
-    requirements = relationship(
-        "ShiftSlotRequirement",
+    preferences = relationship(
+        "ShiftPreference",
         back_populates="slot",
         cascade="all, delete-orphan",
     )
-

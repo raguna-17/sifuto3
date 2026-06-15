@@ -1,65 +1,85 @@
-from __future__ import annotations
 from datetime import datetime
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
-from app.core.enums import UserRole
-from app.domains.positions.schema import PositionResponse
+
+from pydantic import (
+    BaseModel,
+    ConfigDict,
+    EmailStr,
+)
+
+from app.core.enums import (
+    PositionType,
+    UserRole,
+)
 
 
-# -------------------------
-# base
-# -------------------------
-class UserBase(BaseModel):
-    email: EmailStr
+# ==========================================
+# User Create
+# ==========================================
 
-
-# -------------------------
-# create
-# -------------------------
-class UserCreate(UserBase):
-    password: str = Field(min_length=4, max_length=128)
-
-
-# -------------------------
-# login
-# -------------------------
-class UserLogin(BaseModel):
+class UserCreate(BaseModel):
     email: EmailStr
     password: str
+    position: PositionType = PositionType.STAFF
 
 
-# -------------------------
-# update
-# -------------------------
+# ==========================================
+# User Update
+# ==========================================
+
 class UserUpdate(BaseModel):
     email: EmailStr | None = None
-    password: str | None = Field(default=None, min_length=4, max_length=128)
+    password: str | None = None
+    position: PositionType | None = None
+    is_active: bool | None = None
 
 
-# -------------------------
-# response
-# -------------------------
-class UserResponse(UserBase):
+# ==========================================
+# User Response
+# ==========================================
+
+class UserResponse(BaseModel):
     id: int
+    email: EmailStr
+    position: PositionType
     role: UserRole
     is_active: bool
     created_at: datetime
     updated_at: datetime
 
-    positions: list["PositionResponse"] = Field(default_factory=list)
+    model_config = ConfigDict(
+        from_attributes=True
+    )
 
-    model_config = ConfigDict(from_attributes=True)
+
+# ==========================================
+# Login
+# ==========================================
+
+class LoginRequest(BaseModel):
+    email: EmailStr
+    password: str
 
 
-# -------------------------
-# token
-# -------------------------
+# ==========================================
+# Token
+# ==========================================
+
 class Token(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
 
 
-class TokenPayload(BaseModel):
-    sub: str
-    exp: int  # 
+# ==========================================
+# Current User
+# ==========================================
 
+class CurrentUser(BaseModel):
+    id: int
+    email: EmailStr
+    position: PositionType
+    role: UserRole
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )

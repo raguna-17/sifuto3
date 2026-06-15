@@ -6,6 +6,12 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
+class PositionType(str, Enum):
+    MANAGER = "manager"
+    LEADER = "leader"
+    STAFF = "staff"
+
+    
 class TokenType(str, Enum):
     ACCESS = "access"
     REFRESH = "refresh"

@@ -10,16 +10,15 @@ from app.core.dependencies import CurrentUser
 from app.db.session import get_db
 
 from app.domains.users.schema import (
+    LoginRequest,
     Token,
     UserCreate,
-    UserLogin,
     UserResponse,
 )
 
 from app.domains.users.service import (
     EmailAlreadyExistsError,
     InvalidCredentialsError,
-    UserInactiveError,
     UserService,
 )
 
@@ -29,9 +28,9 @@ router = APIRouter(
 )
 
 
-# ==================================================
-# register
-# ==================================================
+# ==========================================
+# Register
+# ==========================================
 
 @router.post(
     "/register",
@@ -55,29 +54,23 @@ async def register(
         )
 
 
-# ==================================================
-# login
-# ==================================================
+# ==========================================
+# Login
+# ==========================================
 
 @router.post(
     "/login",
     response_model=Token,
 )
 async def login(
-    user_in: UserLogin,
+    login_data: LoginRequest,
     db: AsyncSession = Depends(get_db),
 ):
     try:
         return await UserService.login(
             db=db,
-            email=user_in.email,
-            password=user_in.password,
-        )
-
-    except UserInactiveError:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="User is inactive",
+            email=login_data.email,
+            password=login_data.password,
         )
 
     except InvalidCredentialsError:
@@ -87,9 +80,9 @@ async def login(
         )
 
 
-# ==================================================
-# current user
-# ==================================================
+# ==========================================
+# Current User
+# ==========================================
 
 @router.get(
     "/me",

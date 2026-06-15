@@ -1,29 +1,22 @@
 from datetime import datetime
 
 from sqlalchemy import (
+    Boolean,
     DateTime,
     Enum,
     String,
-    Boolean,
-    ForeignKey,
-    Table,
-    Column,
     func,
 )
-from sqlalchemy.orm import Mapped, mapped_column, relationship
+from sqlalchemy.orm import (
+    Mapped,
+    mapped_column,
+    relationship,
+)
 
 from app.db.base import Base
-from app.core.enums import UserRole
-
-
-# ==================================================
-# ser Position
-# ==================================================
-user_positions = Table(
-    "user_positions",
-    Base.metadata,
-    Column("user_id", ForeignKey("users.id"), primary_key=True),
-    Column("position_id", ForeignKey("positions.id"), primary_key=True),
+from app.core.enums import (
+    UserRole,
+    PositionType,
 )
 
 
@@ -42,6 +35,12 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
+    )
+
+    position: Mapped[PositionType] = mapped_column(
+        Enum(PositionType),
+        nullable=False,
+        default=PositionType.STAFF,
     )
 
     role: Mapped[UserRole] = mapped_column(
@@ -69,10 +68,6 @@ class User(Base):
         nullable=False,
     )
 
-    # ==================================================
-    # relationships
-    # ==================================================
-
     preferences = relationship(
         "ShiftPreference",
         back_populates="user",
@@ -84,10 +79,3 @@ class User(Base):
         back_populates="user",
         cascade="all, delete-orphan",
     )
-
-    positions = relationship(
-        "Position",
-        secondary=user_positions,
-        back_populates="users",
-    )
-

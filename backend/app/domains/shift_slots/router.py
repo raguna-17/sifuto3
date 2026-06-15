@@ -18,7 +18,8 @@ from app.domains.shift_slots.schema import (
 from app.domains.shift_slots.service import (
     ShiftSlotService,
     ShiftSlotNotFoundError,
-    InvalidShiftTimeError,
+    ShiftSlotInPastError,
+    ShiftSlotConflictError,
 )
 
 router = APIRouter(
@@ -28,7 +29,7 @@ router = APIRouter(
 
 
 # ==================================================
-# create
+# create (ADMIN ONLY)
 # ==================================================
 
 @router.post(
@@ -38,7 +39,7 @@ router = APIRouter(
 )
 async def create_shift_slot(
     slot_in: ShiftSlotCreate,
-    _: AdminUser,
+    _: AdminUser,  # admin guard
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -47,15 +48,21 @@ async def create_shift_slot(
             slot_in=slot_in,
         )
 
-    except InvalidShiftTimeError:
+    except ShiftSlotInPastError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="start_at must be before end_at",
+            detail="cannot create past shift slot",
+        )
+
+    except ShiftSlotConflictError:
+        raise HTTPException(
+            status_code=status.HTTP_409_CONFLICT,
+            detail="shift slot already exists",
         )
 
 
 # ==================================================
-# get all
+# get all (PUBLIC)
 # ==================================================
 
 @router.get(
@@ -69,7 +76,7 @@ async def get_shift_slots(
 
 
 # ==================================================
-# get by id
+# get by id (PUBLIC)
 # ==================================================
 
 @router.get(
@@ -89,12 +96,12 @@ async def get_shift_slot(
     except ShiftSlotNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shift slot not found",
+            detail="shift slot not found",
         )
 
 
 # ==================================================
-# update
+# update (ADMIN ONLY)
 # ==================================================
 
 @router.patch(
@@ -104,7 +111,7 @@ async def get_shift_slot(
 async def update_shift_slot(
     slot_id: int,
     slot_in: ShiftSlotUpdate,
-    _: AdminUser,
+    _: AdminUser,  # admin guard
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -117,18 +124,18 @@ async def update_shift_slot(
     except ShiftSlotNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shift slot not found",
+            detail="shift slot not found",
         )
 
-    except InvalidShiftTimeError:
+    except ShiftSlotInPastError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="start_at must be before end_at",
+            detail="cannot update to past time",
         )
 
 
 # ==================================================
-# delete
+# delete (ADMIN ONLY)
 # ==================================================
 
 @router.delete(
@@ -137,7 +144,7 @@ async def update_shift_slot(
 )
 async def delete_shift_slot(
     slot_id: int,
-    _: AdminUser,
+    _: AdminUser,  # admin guard
     db: AsyncSession = Depends(get_db),
 ):
     try:
@@ -149,6 +156,5 @@ async def delete_shift_slot(
     except ShiftSlotNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Shift slot not found",
+            detail="shift slot not found",
         )
-

@@ -1,6 +1,6 @@
-from sqlalchemy import select
-from sqlalchemy.orm import selectinload
+﻿from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.orm import selectinload
 
 from app.core.enums import UserRole
 from app.core.security import (
@@ -31,9 +31,15 @@ class UserInactiveError(Exception):
 class UserService:
 
     @staticmethod
-    async def create_user(db: AsyncSession, user_in: UserCreate) -> User:
+    async def create_user(
+        db: AsyncSession,
+        user_in: UserCreate,
+    ) -> User:
+
         existing_user = await db.scalar(
-            select(User).where(User.email == user_in.email)
+            select(User).where(
+                User.email == user_in.email
+            )
         )
 
         if existing_user:
@@ -41,7 +47,10 @@ class UserService:
 
         user = User(
             email=user_in.email,
-            hashed_password=hash_password(user_in.password),
+            hashed_password=hash_password(
+                user_in.password
+            ),
+            position=user_in.position,
             role=UserRole.USER,
             is_active=True,
         )
@@ -49,14 +58,8 @@ class UserService:
         try:
             db.add(user)
             await db.commit()
+            await db.refresh(user)
 
-            stmt = (
-                select(User)
-                .options(selectinload(User.positions))
-                .where(User.id == user.id)
-            )
-
-            user = await db.scalar(stmt)
             return user
 
         except Exception:
@@ -71,11 +74,7 @@ class UserService:
     ) -> User | None:
 
         user = await db.scalar(
-            select(User)
-            .options(
-                selectinload(User.positions)
-            )
-            .where(
+            select(User).where(
                 User.email == email
             )
         )
@@ -136,14 +135,7 @@ class UserService:
     ) -> User | None:
 
         return await db.scalar(
-            select(User)
-            .options(
-                selectinload(User.positions),
-                selectinload(User.preferences),
-                selectinload(User.assignments),
-            )
-            .where(
+            select(User).where(
                 User.id == user_id
             )
         )
-

@@ -4,12 +4,14 @@ from fastapi import (
     HTTPException,
     status,
 )
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import (
     CurrentUser,
     AdminUser,
 )
+
 from app.db.session import get_db
 
 from app.domains.shift_assignments.schema import (
@@ -31,7 +33,9 @@ router = APIRouter(
 )
 
 
-
+# ==================================================
+# create (ADMIN ONLY)
+# ==================================================
 @router.post(
     "",
     response_model=ShiftAssignmentResponse,
@@ -61,6 +65,9 @@ async def create_assignment(
         )
 
 
+# ==================================================
+# get all (ADMIN ONLY)
+# ==================================================
 @router.get(
     "",
     response_model=list[ShiftAssignmentResponse],
@@ -72,6 +79,9 @@ async def get_all_assignments(
     return await ShiftAssignmentService.get_all(db)
 
 
+# ==================================================
+# get my assignments (USER + ADMIN)
+# ==================================================
 @router.get(
     "/me",
     response_model=list[ShiftAssignmentResponse],
@@ -86,6 +96,9 @@ async def get_my_assignments(
     )
 
 
+# ==================================================
+# get by id (ADMIN ONLY)
+# ==================================================
 @router.get(
     "/{assignment_id}",
     response_model=ShiftAssignmentResponse,
@@ -108,6 +121,9 @@ async def get_assignment(
         )
 
 
+# ==================================================
+# update (ADMIN ONLY)
+# ==================================================
 @router.patch(
     "/{assignment_id}",
     response_model=ShiftAssignmentResponse,
@@ -132,6 +148,9 @@ async def update_assignment(
         )
 
 
+# ==================================================
+# delete (ADMIN ONLY)
+# ==================================================
 @router.delete(
     "/{assignment_id}",
     status_code=status.HTTP_204_NO_CONTENT,
@@ -152,4 +171,3 @@ async def delete_assignment(
             status_code=404,
             detail="Assignment not found",
         )
-

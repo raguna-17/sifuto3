@@ -17,8 +17,6 @@ from app.domains.users.model import User
 from app.domains.shift_preferences.model import ShiftPreference
 from app.domains.shift_assignments.model import ShiftAssignment
 from app.domains.shift_slots.model import ShiftSlot
-from app.domains.positions.model import Position
-from app.domains.shift_slot_requirements.model import ShiftSlotRequirement
 
 
 settings = get_settings()

@@ -1,8 +1,12 @@
 import pytest
 
 
+# =========================
+# register
+# =========================
 @pytest.mark.asyncio
 async def test_register_success(client):
+
     payload = {
         "email": "newuser@example.com",
         "password": "password123"
@@ -10,7 +14,6 @@ async def test_register_success(client):
 
     res = await client.post("/users/register", json=payload)
 
-    # ← routerで201にしてるので修正
     assert res.status_code == 201
 
     data = res.json()
@@ -21,6 +24,7 @@ async def test_register_success(client):
 
 @pytest.mark.asyncio
 async def test_register_duplicate_email(client, test_user):
+
     payload = {
         "email": test_user.email,
         "password": "password123"
@@ -29,11 +33,15 @@ async def test_register_duplicate_email(client, test_user):
     res = await client.post("/users/register", json=payload)
 
     assert res.status_code == 400
-    assert res.json()["detail"] == "Email already registered"
+    assert res.json()["detail"] == "Email already exists"
 
 
+# =========================
+# login
+# =========================
 @pytest.mark.asyncio
 async def test_login_success(client, test_user):
+
     payload = {
         "email": test_user.email,
         "password": "password"
@@ -46,11 +54,12 @@ async def test_login_success(client, test_user):
     data = res.json()
 
     assert "access_token" in data
-    assert data["token_type"] == "bearer"
+    assert "refresh_token" in data  # サービス仕様に合わせる
 
 
 @pytest.mark.asyncio
 async def test_login_invalid_email(client):
+
     payload = {
         "email": "notfound@example.com",
         "password": "password"
@@ -64,6 +73,7 @@ async def test_login_invalid_email(client):
 
 @pytest.mark.asyncio
 async def test_login_wrong_password(client, test_user):
+
     payload = {
         "email": test_user.email,
         "password": "wrongpassword"
@@ -75,8 +85,12 @@ async def test_login_wrong_password(client, test_user):
     assert res.json()["detail"] == "Invalid email or password"
 
 
+# =========================
+# me
+# =========================
 @pytest.mark.asyncio
 async def test_read_current_user_success(client, auth_headers):
+
     res = await client.get("/users/me", headers=auth_headers)
 
     assert res.status_code == 200
@@ -89,6 +103,7 @@ async def test_read_current_user_success(client, auth_headers):
 
 @pytest.mark.asyncio
 async def test_read_current_user_no_token(client):
+
     res = await client.get("/users/me")
 
     assert res.status_code == 401

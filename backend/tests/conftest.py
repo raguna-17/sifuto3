@@ -1,67 +1,61 @@
-﻿import os
-import pytest_asyncio
+import os
 import pytest
-from argon2 import PasswordHasher
-from httpx import ASGITransport, AsyncClient
-from sqlalchemy.ext.asyncio import (
-    AsyncSession,
-    async_sessionmaker,
-    create_async_engine,
-)
+
+from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
+from sqlalchemy.orm import sessionmaker
 
 from app.main import app
-from app.db.base import Base
 from app.db.session import get_db
 
 from app.domains.users.model import User
-from app.core.enums import UserRole
-from app.core.security import create_access_token
+from app.core.security import create_access_token, hash_password
 
 
-ph = PasswordHasher()
+# =========================
+# DB URL
+# =========================
 DATABASE_URL = os.getenv("DATABASE_URL")
 
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
-@pytest_asyncio.fixture(scope="session")
+
+# =========================
+# engine
+# =========================
+@pytest.fixture(scope="session")
 async def engine():
-
     engine = create_async_engine(
         DATABASE_URL,
         future=True,
+        echo=False,
+    )
+    try:
+        yield engine
+    finally:
+        await engine.dispose()
+
+
+# =========================
+# db session
+# =========================
+@pytest.fixture
+async def db_session(engine):
+    TestingSessionLocal = sessionmaker(
+        bind=engine,
+        class_=AsyncSession,
+        expire_on_commit=False,
     )
 
-    yield engine
-
-    await engine.dispose()
-
-TestingSessionLocal = async_sessionmaker(
-    bind=engine,
-    class_=AsyncSession,
-    expire_on_commit=False,
-)
+    async with TestingSessionLocal() as session:
+        yield session
 
 
-@pytest_asyncio.fixture
-async def db_session(engine):
-
-    async with engine.connect() as connection:
-
-        transaction = await connection.begin()
-
-        session = AsyncSession(
-            bind=connection,
-            expire_on_commit=False,
-        )
-
-        try:
-            yield session
-
-        finally:
-            await session.close()
-            await transaction.rollback()
-
-
-@pytest_asyncio.fixture
+# =========================
+# override dependency
+# =========================
+@pytest.fixture
 async def client(db_session):
 
     async def override_get_db():
@@ -80,33 +74,35 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
-@pytest_asyncio.fixture
+# =========================
+# test user
+# =========================
+@pytest.fixture
 async def test_user(db_session):
 
     user = User(
         email="test@example.com",
-        hashed_password=ph.hash("password123"),
-        role=UserRole.USER,
+        hashed_password=hash_password("password"),
         is_active=True,
     )
 
     db_session.add(user)
-
     await db_session.commit()
     await db_session.refresh(user)
 
     return user
 
 
-@pytest_asyncio.fixture
+# =========================
+# auth headers
+# =========================
+@pytest.fixture
 async def auth_headers(test_user):
 
-    token = create_access_token(
-        {
-            "sub": str(test_user.id),
-            "role": test_user.role.value,
-        }
-    )
+    token = create_access_token({
+        "sub": str(test_user.id),
+        "role": test_user.role.value,  # Enum安全化
+    })
 
     return {
         "Authorization": f"Bearer {token}"

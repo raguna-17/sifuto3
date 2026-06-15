@@ -4,12 +4,14 @@ from fastapi import (
     HTTPException,
     status,
 )
+
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.core.dependencies import (
     CurrentUser,
     AdminUser,
 )
+
 from app.db.session import get_db
 
 from app.domains.shift_preferences.schema import (
@@ -30,6 +32,9 @@ router = APIRouter(
 )
 
 
+# ==================================================
+# create (LOGIN REQUIRED)
+# ==================================================
 @router.post(
     "",
     response_model=ShiftPreferenceResponse,
@@ -43,17 +48,20 @@ async def create_preference(
     try:
         return await ShiftPreferenceService.create(
             db=db,
-            user_id=current_user.id,  # 
+            user_id=current_user.id,
             preference_in=preference_in,
         )
 
     except InvalidPreferenceTimeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="start_at must be before end_at",
+            detail="invalid time range",
         )
 
 
+# ==================================================
+# get my preferences (LOGIN REQUIRED)
+# ==================================================
 @router.get(
     "/me",
     response_model=list[ShiftPreferenceResponse],
@@ -68,6 +76,9 @@ async def get_my_preferences(
     )
 
 
+# ==================================================
+# get all (ADMIN ONLY)
+# ==================================================
 @router.get(
     "",
     response_model=list[ShiftPreferenceResponse],
@@ -79,6 +90,9 @@ async def get_all_preferences(
     return await ShiftPreferenceService.get_all(db=db)
 
 
+# ==================================================
+# get by id (ADMIN ONLY)
+# ==================================================
 @router.get(
     "/{preference_id}",
     response_model=ShiftPreferenceResponse,
@@ -101,6 +115,9 @@ async def get_preference(
         )
 
 
+# ==================================================
+# update (OWNER or ADMIN)
+# ==================================================
 @router.patch(
     "/{preference_id}",
     response_model=ShiftPreferenceResponse,
@@ -108,10 +125,22 @@ async def get_preference(
 async def update_preference(
     preference_id: int,
     preference_in: ShiftPreferenceUpdate,
-    _: AdminUser,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        pref = await ShiftPreferenceService.get_by_id(
+            db=db,
+            preference_id=preference_id,
+        )
+
+        # 所有者 or admin 以外は拒否
+        if pref.user_id != current_user.id and not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="not allowed",
+            )
+
         return await ShiftPreferenceService.update(
             db=db,
             preference_id=preference_id,
@@ -127,20 +156,34 @@ async def update_preference(
     except InvalidPreferenceTimeError:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
-            detail="start_at must be before end_at",
+            detail="invalid time range",
         )
 
 
+# ==================================================
+# delete (OWNER or ADMIN)
+# ==================================================
 @router.delete(
     "/{preference_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
 async def delete_preference(
     preference_id: int,
-    _: AdminUser,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
     try:
+        pref = await ShiftPreferenceService.get_by_id(
+            db=db,
+            preference_id=preference_id,
+        )
+
+        if pref.user_id != current_user.id and not current_user.is_admin:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="not allowed",
+            )
+
         await ShiftPreferenceService.delete(
             db=db,
             preference_id=preference_id,
@@ -151,4 +194,3 @@ async def delete_preference(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Preference not found",
         )
-
