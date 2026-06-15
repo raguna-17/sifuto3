@@ -8,6 +8,8 @@ from app.domains.users.model import User
 from app.main import app
 from app.db.session import get_db
 
+from app.core.security import create_access_token, hash_password
+
 
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
