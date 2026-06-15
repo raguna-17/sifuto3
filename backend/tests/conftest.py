@@ -8,7 +8,9 @@ from app.main import app
 from app.domains.users.model import User
 from app.db.session import get_db
 from app.core.security import hash_password
+from app.db.session import init_db
 
+init_db()  
 
 # =========================
 # DB URL
