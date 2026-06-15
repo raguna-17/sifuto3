@@ -24,7 +24,9 @@ if not DATABASE_URL:
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
     yield loop
+    loop.run_until_complete(loop.shutdown_asyncgens())
     loop.close()
 
 
@@ -35,15 +37,15 @@ def event_loop():
 def engine():
     return create_async_engine(
         DATABASE_URL,
-        echo=False,
         pool_pre_ping=True,
+        pool_recycle=3600,
     )
 
 
 # =========================
 # DB connection + transaction
 # =========================
-@pytest.fixture(scope="function")
+@pytest.fixture
 async def connection(engine):
     async with engine.connect() as conn:
         trans = await conn.begin()
@@ -51,6 +53,7 @@ async def connection(engine):
             yield conn
         finally:
             await trans.rollback()
+            await conn.close()
 
 
 # =========================
