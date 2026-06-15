@@ -1,3 +1,4 @@
+import os
 import asyncio
 import pytest
 
@@ -8,7 +9,9 @@ from app.main import app
 from app.db.session import get_db
 
 
-DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/test_db"
+DATABASE_URL = os.getenv("DATABASE_URL")
+if not DATABASE_URL:
+    raise RuntimeError("DATABASE_URL is not set")
 
 
 # ① event loop固定（CI安定化の核）
