@@ -4,19 +4,23 @@ import pytest
 
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
+
 from app.domains.users.model import User
-from app.main import app
 from app.db.session import get_db
+from app.core.security import hash_password
 
-from app.core.security import create_access_token, hash_password
 
-
+# =========================
+# DB URL
+# =========================
 DATABASE_URL = os.getenv("DATABASE_URL")
 if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
 
-# ① event loop固定（CI安定化の核）
+# =========================
+# event loop固定
+# =========================
 @pytest.fixture(scope="session")
 def event_loop():
     loop = asyncio.new_event_loop()
@@ -24,13 +28,21 @@ def event_loop():
     loop.close()
 
 
-# ② engine（session scope・async禁止）
+# =========================
+# engine（同期fixture）
+# =========================
 @pytest.fixture(scope="session")
 def engine():
-    return create_async_engine(DATABASE_URL, echo=False)
+    return create_async_engine(
+        DATABASE_URL,
+        echo=False,
+        pool_pre_ping=True,
+    )
 
 
-# ③ connection単位でトランザクション制御
+# =========================
+# DB connection + transaction
+# =========================
 @pytest.fixture
 async def connection(engine):
     async with engine.connect() as conn:
@@ -42,20 +54,24 @@ async def connection(engine):
             await conn.close()
 
 
-# ④ session（テスト用DBセッション）
+# =========================
+# session（このテスト単位で独立）
+# =========================
 @pytest.fixture
 async def db_session(connection):
-    TestingSessionLocal = sessionmaker(
+    SessionLocal = sessionmaker(
         bind=connection,
         class_=AsyncSession,
         expire_on_commit=False,
     )
 
-    async with TestingSessionLocal() as session:
+    async with SessionLocal() as session:
         yield session
 
 
-# ⑤ FastAPI override
+# =========================
+# FastAPI client override
+# =========================
 @pytest.fixture
 async def client(db_session):
     async def override_get_db():
@@ -76,6 +92,9 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
+# =========================
+# test user
+# =========================
 @pytest.fixture
 async def test_user(db_session):
     user = User(
