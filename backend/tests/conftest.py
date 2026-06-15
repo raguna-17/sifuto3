@@ -1,49 +1,47 @@
-import os
+import asyncio
 import pytest
 
-from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession
 from sqlalchemy.orm import sessionmaker
 
 from app.main import app
 from app.db.session import get_db
 
-from app.domains.users.model import User
-from app.core.security import create_access_token, hash_password
+
+DATABASE_URL = "postgresql+asyncpg://user:password@localhost:5432/test_db"
 
 
-# =========================
-# DB URL
-# =========================
-DATABASE_URL = os.getenv("DATABASE_URL")
-
-if not DATABASE_URL:
-    raise RuntimeError("DATABASE_URL is not set")
-
-
-# =========================
-# engine
-# =========================
+# ① event loop固定（CI安定化の核）
 @pytest.fixture(scope="session")
-async def engine():
-    engine = create_async_engine(
-        DATABASE_URL,
-        future=True,
-        echo=False,
-    )
-    try:
-        yield engine
-    finally:
-        await engine.dispose()
+def event_loop():
+    loop = asyncio.new_event_loop()
+    yield loop
+    loop.close()
 
 
-# =========================
-# db session
-# =========================
+# ② engine（session scope・async禁止）
+@pytest.fixture(scope="session")
+def engine():
+    return create_async_engine(DATABASE_URL, echo=False)
+
+
+# ③ connection単位でトランザクション制御
 @pytest.fixture
-async def db_session(engine):
+async def connection(engine):
+    async with engine.connect() as conn:
+        trans = await conn.begin()
+        try:
+            yield conn
+        finally:
+            await trans.rollback()
+            await conn.close()
+
+
+# ④ session（テスト用DBセッション）
+@pytest.fixture
+async def db_session(connection):
     TestingSessionLocal = sessionmaker(
-        bind=engine,
+        bind=connection,
         class_=AsyncSession,
         expire_on_commit=False,
     )
@@ -52,16 +50,15 @@ async def db_session(engine):
         yield session
 
 
-# =========================
-# override dependency
-# =========================
+# ⑤ FastAPI override
 @pytest.fixture
 async def client(db_session):
-
     async def override_get_db():
         yield db_session
 
     app.dependency_overrides[get_db] = override_get_db
+
+    from httpx import AsyncClient, ASGITransport
 
     transport = ASGITransport(app=app)
 
@@ -72,38 +69,3 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
-
-
-# =========================
-# test user
-# =========================
-@pytest.fixture
-async def test_user(db_session):
-
-    user = User(
-        email="test@example.com",
-        hashed_password=hash_password("password"),
-        is_active=True,
-    )
-
-    db_session.add(user)
-    await db_session.commit()
-    await db_session.refresh(user)
-
-    return user
-
-
-# =========================
-# auth headers
-# =========================
-@pytest.fixture
-async def auth_headers(test_user):
-
-    token = create_access_token({
-        "sub": str(test_user.id),
-        "role": test_user.role.value,  # Enum安全化
-    })
-
-    return {
-        "Authorization": f"Bearer {token}"
-    }
