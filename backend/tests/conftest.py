@@ -43,7 +43,7 @@ def engine():
 # =========================
 # DB connection + transaction
 # =========================
-@pytest.fixture
+@pytest.fixture(scope="function")
 async def connection(engine):
     async with engine.connect() as conn:
         trans = await conn.begin()
@@ -51,7 +51,6 @@ async def connection(engine):
             yield conn
         finally:
             await trans.rollback()
-            await conn.close()
 
 
 # =========================
