@@ -72,3 +72,18 @@ async def client(db_session):
         yield ac
 
     app.dependency_overrides.clear()
+
+
+@pytest.fixture
+async def test_user(db_session):
+    user = User(
+        email="test@example.com",
+        hashed_password=hash_password("password"),
+        is_active=True,
+    )
+
+    db_session.add(user)
+    await db_session.commit()
+    await db_session.refresh(user)
+
+    return user
