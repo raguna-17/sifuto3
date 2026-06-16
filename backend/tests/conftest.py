@@ -3,10 +3,8 @@ import pytest
 
 from httpx import AsyncClient, ASGITransport
 
-from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
-
 from app.main import app
-from app.db.session import SessionFactory, engine
+from app.db.session import SessionFactory, engine, get_db
 from app.domains.users.model import User
 from app.core.security import hash_password
 
@@ -16,23 +14,23 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
 
-
-
+# =========================
+# DB session (rollback方式)
+# =========================
 @pytest.fixture
 async def db_session():
-    async with engine.connect() as conn:
-        trans = await conn.begin()
+    async with SessionFactory() as session:
+        async with session.begin():  # トランザクション開始
 
-        session = SessionFactory(bind=conn)
-
-        try:
             yield session
-        finally:
-            await session.close()
-            await trans.rollback()
-            await conn.close()
+
+            # ここで自動rollback（commitしなければOK）
+            await session.rollback()
 
 
+# =========================
+# FastAPI client
+# =========================
 @pytest.fixture
 async def client(db_session):
 
@@ -52,6 +50,9 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
+# =========================
+# test user
+# =========================
 @pytest.fixture
 async def test_user(db_session):
     user = User(
@@ -61,7 +62,8 @@ async def test_user(db_session):
     )
 
     db_session.add(user)
-    await db_session.flush()   # commit禁止（重要）
+
+    await db_session.flush()   # commit禁止
     await db_session.refresh(user)
 
     return user
