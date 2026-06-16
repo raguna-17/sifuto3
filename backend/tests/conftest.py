@@ -20,12 +20,9 @@ if not DATABASE_URL:
 @pytest.fixture
 async def db_session():
     async with SessionFactory() as session:
-        async with session.begin():  # トランザクション開始
-
-            yield session
-
-            # ここで自動rollback（commitしなければOK）
-            await session.rollback()
+        yield session
+        await session.rollback()
+        await session.close()
 
 
 # =========================
