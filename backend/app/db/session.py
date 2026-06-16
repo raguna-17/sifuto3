@@ -1,5 +1,4 @@
 from collections.abc import AsyncGenerator
-
 from sqlalchemy.ext.asyncio import (
     AsyncSession,
     async_sessionmaker,
@@ -7,14 +6,16 @@ from sqlalchemy.ext.asyncio import (
 )
 
 from app.core.config import get_settings
+import os
 
 
-DATABASE_URL = get_settings().DATABASE_URL
+def get_database_url():
+    return os.getenv("DATABASE_URL", get_settings().DATABASE_URL)
 
 
-# =========================
-# single engine (global)
-# =========================
+DATABASE_URL = get_database_url()
+
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
@@ -22,9 +23,6 @@ engine = create_async_engine(
 )
 
 
-# =========================
-# session factory (single)
-# =========================
 SessionFactory = async_sessionmaker(
     bind=engine,
     class_=AsyncSession,
@@ -32,9 +30,6 @@ SessionFactory = async_sessionmaker(
 )
 
 
-# =========================
-# FastAPI dependency
-# =========================
 async def get_db() -> AsyncGenerator[AsyncSession, None]:
     async with SessionFactory() as session:
         yield session

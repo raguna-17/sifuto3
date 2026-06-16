@@ -6,7 +6,7 @@ from httpx import AsyncClient, ASGITransport
 from sqlalchemy.ext.asyncio import create_async_engine, AsyncSession, async_sessionmaker
 
 from app.main import app
-from app.db.session import get_db
+from app.db.session import SessionFactory, engine
 from app.domains.users.model import User
 from app.core.security import hash_password
 
@@ -16,21 +16,6 @@ if not DATABASE_URL:
     raise RuntimeError("DATABASE_URL is not set")
 
 
-# =========================
-# Engine (TEST専用)
-# =========================
-engine = create_async_engine(
-    DATABASE_URL,
-    future=True,
-    echo=False,
-)
-
-
-SessionFactory = async_sessionmaker(
-    bind=engine,
-    expire_on_commit=False,
-    class_=AsyncSession,
-)
 
 
 @pytest.fixture
