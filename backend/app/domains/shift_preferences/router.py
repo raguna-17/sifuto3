@@ -23,7 +23,6 @@ from app.domains.shift_preferences.schema import (
 from app.domains.shift_preferences.service import (
     ShiftPreferenceService,
     ShiftPreferenceNotFoundError,
-    InvalidPreferenceTimeError,
 )
 
 router = APIRouter(
@@ -45,18 +44,11 @@ async def create_preference(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        return await ShiftPreferenceService.create(
-            db=db,
-            user_id=current_user.id,
-            preference_in=preference_in,
-        )
-
-    except InvalidPreferenceTimeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="invalid time range",
-        )
+    return await ShiftPreferenceService.create(
+        db=db,
+        user_id=current_user.id,
+        preference_in=preference_in,
+    )
 
 
 # ==================================================
@@ -134,8 +126,8 @@ async def update_preference(
             preference_id=preference_id,
         )
 
-        # 所有者 or admin 以外は拒否
-        if pref.user_id != current_user.id and not current_user.is_admin:
+        # owner or admin only
+        if pref.user_id != current_user.id and current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="not allowed",
@@ -151,12 +143,6 @@ async def update_preference(
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Preference not found",
-        )
-
-    except InvalidPreferenceTimeError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="invalid time range",
         )
 
 
@@ -178,7 +164,7 @@ async def delete_preference(
             preference_id=preference_id,
         )
 
-        if pref.user_id != current_user.id and not current_user.is_admin:
+        if pref.user_id != current_user.id and current_user.role != UserRole.ADMIN:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="not allowed",

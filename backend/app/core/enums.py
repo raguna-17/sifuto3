@@ -6,17 +6,6 @@ class UserRole(str, Enum):
     ADMIN = "admin"
 
 
-class PositionType(str, Enum):
-    MANAGER = "manager"
-    LEADER = "leader"
-    STAFF = "staff"
-
-    
-class TokenType(str, Enum):
-    ACCESS = "access"
-    REFRESH = "refresh"
-
-
 class PreferencePriority(str,Enum):
     UNAVAILABLE = "unavailable"
     AVOID = "avoid"
@@ -25,8 +14,5 @@ class PreferencePriority(str,Enum):
     REQUIRED = "required"
 
 
-class ShiftStatus(str, Enum):
-    CONFIRMED = "confirmed"
-    CANCELED = "canceled"
 
 

@@ -1,5 +1,3 @@
-from datetime import datetime
-
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -23,7 +21,7 @@ class UserNotFoundError(Exception):
     pass
 
 
-class InvalidPreferenceTimeError(Exception):
+class ShiftPreferenceConflictError(Exception):
     pass
 
 
@@ -31,28 +29,6 @@ class InvalidPreferenceTimeError(Exception):
 # Service
 # ==========================================
 class ShiftPreferenceService:
-
-    # ------------------------------------------
-    # 共通バリデーション
-    # ------------------------------------------
-    @staticmethod
-    def _validate_time_range(
-        start_at: datetime | None,
-        end_at: datetime | None,
-    ) -> None:
-
-        # 片方だけNG
-        if (start_at is None) != (end_at is None):
-            raise InvalidPreferenceTimeError(
-                "start_at and end_at must both be set or both be None"
-            )
-
-        # 両方ある場合のみチェック
-        if start_at is not None and end_at is not None:
-            if start_at >= end_at:
-                raise InvalidPreferenceTimeError(
-                    "start_at must be earlier than end_at"
-                )
 
     # ------------------------------------------
     # create
@@ -64,21 +40,27 @@ class ShiftPreferenceService:
         preference_in: ShiftPreferenceCreate,
     ) -> ShiftPreference:
 
+        # ユーザー存在チェック
         user = await db.get(User, user_id)
         if user is None:
             raise UserNotFoundError()
 
-        ShiftPreferenceService._validate_time_range(
-            preference_in.start_at,
-            preference_in.end_at,
+        # 重複チェック（ここが今回の本体）
+        existing = await db.scalar(
+            select(ShiftPreference).where(
+                ShiftPreference.user_id == user_id,
+                ShiftPreference.shift_slot_id == preference_in.shift_slot_id,
+            )
         )
+
+        if existing:
+            raise ShiftPreferenceConflictError(
+                "shift preference already exists for this user and slot"
+            )
 
         preference = ShiftPreference(
             user_id=user_id,
             shift_slot_id=preference_in.shift_slot_id,
-            target_date=preference_in.target_date,
-            start_at=preference_in.start_at,
-            end_at=preference_in.end_at,
             priority=preference_in.priority,
             note=preference_in.note,
         )
@@ -93,16 +75,16 @@ class ShiftPreferenceService:
             await db.rollback()
             raise
 
+
     # ------------------------------------------
     # get all
     # ------------------------------------------
     @staticmethod
-    async def get_all(
-        db: AsyncSession,
-    ) -> list[ShiftPreference]:
+    async def get_all(db: AsyncSession) -> list[ShiftPreference]:
 
         result = await db.scalars(select(ShiftPreference))
-        return result.all()
+        return list(result)
+
 
     # ------------------------------------------
     # get by id
@@ -113,15 +95,13 @@ class ShiftPreferenceService:
         preference_id: int,
     ) -> ShiftPreference:
 
-        preference = await db.get(
-            ShiftPreference,
-            preference_id,
-        )
+        preference = await db.get(ShiftPreference, preference_id)
 
         if preference is None:
             raise ShiftPreferenceNotFoundError()
 
         return preference
+
 
     # ------------------------------------------
     # get by user
@@ -140,6 +120,7 @@ class ShiftPreferenceService:
 
         return list(result)
 
+
     # ------------------------------------------
     # update
     # ------------------------------------------
@@ -155,23 +136,24 @@ class ShiftPreferenceService:
             preference_id=preference_id,
         )
 
-        update_data = preference_in.model_dump(
-            exclude_unset=True
+        update_data = preference_in.model_dump(exclude_unset=True)
+
+        # 更新後の重複チェック（地味に重要）
+        new_slot_id = update_data.get("shift_slot_id", preference.shift_slot_id)
+        new_user_id = preference.user_id
+
+        existing = await db.scalar(
+            select(ShiftPreference).where(
+                ShiftPreference.user_id == new_user_id,
+                ShiftPreference.shift_slot_id == new_slot_id,
+                ShiftPreference.id != preference_id,
+            )
         )
 
-        new_start = update_data.get(
-            "start_at",
-            preference.start_at,
-        )
-        new_end = update_data.get(
-            "end_at",
-            preference.end_at,
-        )
-
-        ShiftPreferenceService._validate_time_range(
-            new_start,
-            new_end,
-        )
+        if existing:
+            raise ShiftPreferenceConflictError(
+                "duplicate preference after update"
+            )
 
         for field, value in update_data.items():
             setattr(preference, field, value)
@@ -184,6 +166,7 @@ class ShiftPreferenceService:
         except Exception:
             await db.rollback()
             raise
+
 
     # ------------------------------------------
     # delete

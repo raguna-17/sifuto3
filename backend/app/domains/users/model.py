@@ -15,8 +15,7 @@ from sqlalchemy.orm import (
 
 from app.db.base import Base
 from app.core.enums import (
-    UserRole,
-    PositionType,
+    UserRole
 )
 
 
@@ -24,6 +23,11 @@ class User(Base):
     __tablename__ = "users"
 
     id: Mapped[int] = mapped_column(primary_key=True)
+
+    name: Mapped[str] = mapped_column(
+        String(100),
+        nullable=False,
+    )
 
     email: Mapped[str] = mapped_column(
         String(255),
@@ -35,12 +39,6 @@ class User(Base):
     hashed_password: Mapped[str] = mapped_column(
         String(255),
         nullable=False,
-    )
-
-    position: Mapped[PositionType] = mapped_column(
-        Enum(PositionType),
-        nullable=False,
-        default=PositionType.STAFF,
     )
 
     role: Mapped[UserRole] = mapped_column(

@@ -1,6 +1,5 @@
 ﻿from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.orm import selectinload
 
 from app.core.enums import UserRole
 from app.core.security import (
@@ -46,11 +45,11 @@ class UserService:
             raise EmailAlreadyExistsError()
 
         user = User(
+            name=user_in.name,
             email=user_in.email,
             hashed_password=hash_password(
                 user_in.password
             ),
-            position=user_in.position,
             role=UserRole.USER,
             is_active=True,
         )

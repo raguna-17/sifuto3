@@ -25,6 +25,8 @@ from app.domains.shift_assignments.service import (
     ShiftAssignmentNotFoundError,
     UserNotFoundError,
     ShiftSlotNotFoundError,
+    DuplicateAssignmentError,
+    AssignmentCapacityError,
 )
 
 router = APIRouter(
@@ -36,33 +38,18 @@ router = APIRouter(
 # ==================================================
 # create (ADMIN ONLY)
 # ==================================================
-@router.post(
-    "",
-    response_model=ShiftAssignmentResponse,
-    status_code=status.HTTP_201_CREATED,
-)
+@router.post("", response_model=ShiftAssignmentResponse)
 async def create_assignment(
     assignment_in: ShiftAssignmentCreate,
-    _: AdminUser,
+    current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
-    try:
-        return await ShiftAssignmentService.create(
-            db=db,
-            assignment_in=assignment_in,
-        )
-
-    except UserNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="User not found",
-        )
-
-    except ShiftSlotNotFoundError:
-        raise HTTPException(
-            status_code=404,
-            detail="Shift slot not found",
-        )
+    return await ShiftAssignmentService.create(
+        db=db,
+        user_id=current_user.id,
+        slot_id=assignment_in.slot_id,
+        is_auto=True,
+    )
 
 
 # ==================================================
@@ -80,7 +67,7 @@ async def get_all_assignments(
 
 
 # ==================================================
-# get my assignments (USER + ADMIN)
+# get my assignments
 # ==================================================
 @router.get(
     "/me",
@@ -116,7 +103,7 @@ async def get_assignment(
 
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assignment not found",
         )
 
@@ -143,7 +130,7 @@ async def update_assignment(
 
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assignment not found",
         )
 
@@ -168,6 +155,6 @@ async def delete_assignment(
 
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
-            status_code=404,
+            status_code=status.HTTP_404_NOT_FOUND,
             detail="Assignment not found",
         )

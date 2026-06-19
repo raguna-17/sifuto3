@@ -4,9 +4,8 @@ from sqlalchemy import (
     DateTime,
     Integer,
     func,
-    Enum,
 )
-from app.core.enums import PositionType
+
 from sqlalchemy.orm import (
     Mapped,
     mapped_column,
@@ -41,10 +40,6 @@ class ShiftSlot(Base):
         default=1,
     )
 
-    required_position: Mapped[PositionType] = mapped_column(
-        Enum(PositionType),
-        nullable=False,
-    )
 
     created_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True),

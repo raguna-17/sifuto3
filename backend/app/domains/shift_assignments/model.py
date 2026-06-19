@@ -3,7 +3,6 @@ from datetime import datetime
 from sqlalchemy import (
     Boolean,
     DateTime,
-    Enum,
     ForeignKey,
     UniqueConstraint,
     func,
@@ -15,7 +14,7 @@ from sqlalchemy.orm import (
 )
 
 from app.db.base import Base
-from app.core.enums import ShiftStatus
+
 
 
 class ShiftAssignment(Base):
@@ -53,11 +52,12 @@ class ShiftAssignment(Base):
         nullable=False,
     )
 
-    status: Mapped[ShiftStatus] = mapped_column(
-        Enum(ShiftStatus, name="shift_status"),
+    is_confirmed: Mapped[bool] = mapped_column(
+        Boolean,
+        default=True,
         nullable=False,
-        default=ShiftStatus.CONFIRMED,
     )
+
 
     # =========================
     # timestamps

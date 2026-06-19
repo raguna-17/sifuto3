@@ -14,7 +14,7 @@ pydantic-settings
 
 alembic
 python-multipart
-
+ruff
 pytest
 pytest-asyncio
 pytest-cov

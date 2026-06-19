@@ -1,11 +1,10 @@
 from sqlalchemy import select, func
 from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy.exc import IntegrityError
 
 from app.domains.users.model import User
 from app.domains.shift_slots.model import ShiftSlot
 from app.domains.shift_assignments.model import ShiftAssignment
-from app.core.enums import ShiftStatus
-from sqlalchemy.exc import IntegrityError
 
 
 # =========================
@@ -31,10 +30,6 @@ class DuplicateAssignmentError(Exception):
     pass
 
 
-class InvalidStatusTransitionError(Exception):
-    pass
-
-
 # =========================
 # Service
 # =========================
@@ -46,65 +41,60 @@ class ShiftAssignmentService:
     @staticmethod
     async def create(
         db: AsyncSession,
-        assignment_in,
+        user_id: int,
+        slot_id: int,
+        is_auto: bool = True,
     ) -> ShiftAssignment:
 
-        # -------------------------
-        # user check
-        # -------------------------
-        user = await db.get(User, assignment_in.user_id)
+        user = await db.get(User, user_id)
         if user is None:
             raise UserNotFoundError()
 
-        # -------------------------
-        # slot check
-        # -------------------------
-        slot = await db.get(ShiftSlot, assignment_in.slot_id)
+        slot = await db.get(ShiftSlot, slot_id)
         if slot is None:
             raise ShiftSlotNotFoundError()
 
-        # -------------------------
-        # duplicate check（アプリ側ガード）
-        # -------------------------
+        # =========================
+        # 1. 重複チェック（軽く残す）
+        # =========================
         existing = await db.scalar(
             select(ShiftAssignment).where(
-                ShiftAssignment.user_id == assignment_in.user_id,
-                ShiftAssignment.slot_id == assignment_in.slot_id,
+                ShiftAssignment.user_id == user_id,
+                ShiftAssignment.slot_id == slot_id,
             )
         )
         if existing:
             raise DuplicateAssignmentError()
 
-        # -------------------------
-        # capacity check（最新状態保証）
-        # -------------------------
-        current_count = await db.scalar(
-            select(func.count(ShiftAssignment.id)).where(
-                ShiftAssignment.slot_id == assignment_in.slot_id
-            )
-        )
-
-        if current_count >= slot.required_staff_count:
-            raise AssignmentCapacityError()
-
-        # -------------------------
-        # create entity
-        # -------------------------
         assignment = ShiftAssignment(
-            user_id=assignment_in.user_id,
-            slot_id=assignment_in.slot_id,
-            is_auto=assignment_in.is_auto,
-            status=ShiftStatus.CONFIRMED,
+            user_id=user_id,
+            slot_id=slot_id,
+            is_auto=is_auto,
+            is_confirmed=False,
         )
 
         try:
             db.add(assignment)
+            await db.flush()  # ←重要（ここでDB制約チェックさせる）
+
+            # =========================
+            # 2. capacityチェックは「再計算」する
+            # =========================
+            current_count = await db.scalar(
+                select(func.count(ShiftAssignment.id)).where(
+                    ShiftAssignment.slot_id == slot_id
+                )
+            ) or 0
+
+            if current_count > slot.required_staff_count:
+                await db.rollback()
+                raise AssignmentCapacityError()
+
             await db.commit()
             await db.refresh(assignment)
             return assignment
 
         except IntegrityError:
-            # DB側のユニーク制約に引っかかった場合
             await db.rollback()
             raise DuplicateAssignmentError()
 
@@ -120,9 +110,7 @@ class ShiftAssignmentService:
         db: AsyncSession,
     ) -> list[ShiftAssignment]:
 
-        result = await db.scalars(
-            select(ShiftAssignment)
-        )
+        result = await db.scalars(select(ShiftAssignment))
         return result.all()
 
     # =========================
@@ -190,21 +178,9 @@ class ShiftAssignmentService:
 
         update_data = assignment_in.model_dump(exclude_unset=True)
 
-        # -------------------------
-        # status transition guard
-        # -------------------------
-        if "status" in update_data:
-            new_status = update_data["status"]
-
-            if assignment.status == ShiftStatus.CANCELED:
-                raise InvalidStatusTransitionError("already canceled")
-
-            # 最低限：同値更新禁止
-            if assignment.status == new_status:
-                pass
-
-        for field, value in update_data.items():
-            setattr(assignment, field, value)
+        # adminが確定するケース想定
+        if "is_confirmed" in update_data:
+            assignment.is_confirmed = update_data["is_confirmed"]
 
         try:
             await db.commit()

@@ -6,10 +6,7 @@ from pydantic import (
     EmailStr,
 )
 
-from app.core.enums import (
-    PositionType,
-    UserRole,
-)
+from app.core.enums import UserRole
 
 
 # ==========================================
@@ -17,9 +14,9 @@ from app.core.enums import (
 # ==========================================
 
 class UserCreate(BaseModel):
+    name: str
     email: EmailStr
     password: str
-    position: PositionType = PositionType.STAFF
 
 
 # ==========================================
@@ -27,9 +24,9 @@ class UserCreate(BaseModel):
 # ==========================================
 
 class UserUpdate(BaseModel):
+    name: str | None = None
     email: EmailStr | None = None
     password: str | None = None
-    position: PositionType | None = None
     is_active: bool | None = None
 
 
@@ -39,8 +36,8 @@ class UserUpdate(BaseModel):
 
 class UserResponse(BaseModel):
     id: int
+    name: str
     email: EmailStr
-    position: PositionType
     role: UserRole
     is_active: bool
     created_at: datetime
@@ -70,16 +67,3 @@ class Token(BaseModel):
     token_type: str = "bearer"
 
 
-# ==========================================
-# Current User
-# ==========================================
-
-class CurrentUser(BaseModel):
-    id: int
-    email: EmailStr
-    position: PositionType
-    role: UserRole
-
-    model_config = ConfigDict(
-        from_attributes=True
-    )

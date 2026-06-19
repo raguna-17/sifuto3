@@ -7,6 +7,7 @@ from sqlalchemy import (
     Enum,
     Text,
     func,
+    UniqueConstraint,
 )
 from sqlalchemy.orm import relationship, Mapped, mapped_column
 
@@ -14,9 +15,18 @@ from app.db.base import Base
 from app.core.enums import PreferencePriority
 
 
+
+
 class ShiftPreference(Base):
     __tablename__ = "shift_preferences"
-
+    __table_args__ = (
+        UniqueConstraint(
+            "user_id",
+            "shift_slot_id",
+            name="uq_user_shift_preference",
+        ),
+    )
+    
     id: Mapped[int] = mapped_column(primary_key=True, index=True)
 
     # =========================
@@ -34,28 +44,6 @@ class ShiftPreference(Base):
         index=True,
     )
 
-    # =========================
-    # target day
-    # =========================
-    target_date: Mapped[date] = mapped_column(
-        Date,
-        nullable=False,
-        index=True,
-    )
-
-    # =========================
-    # optional time range
-    # （日単位 or 時間帯両対応）
-    # =========================
-    start_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
-
-    end_at: Mapped[datetime | None] = mapped_column(
-        DateTime(timezone=True),
-        nullable=True,
-    )
 
     # =========================
     # preference strength

@@ -92,4 +92,3 @@ async def get_me(
     current_user: CurrentUser,
 ):
     return current_user
-

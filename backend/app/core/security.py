@@ -5,7 +5,6 @@ from jose import JWTError, jwt
 from passlib.context import CryptContext
 
 from app.core.config import get_settings
-from app.core.enums import TokenType
 
 
 settings = get_settings()
@@ -42,7 +41,7 @@ def verify_password(
 def _create_token(
     data: dict[str, Any],
     expires_delta: timedelta,
-    token_type: TokenType,
+    token_type: str,
 ) -> str:
     payload = data.copy()
 
@@ -51,7 +50,7 @@ def _create_token(
     payload.update(
         {
             "exp": datetime.now(timezone.utc) + expires_delta,
-            "type": token_type.value,
+            "type": token_type,
         }
     )
 
@@ -70,7 +69,7 @@ def create_access_token(
         expires_delta=timedelta(
             minutes=settings.ACCESS_TOKEN_EXPIRE_MINUTES,
         ),
-        token_type=TokenType.ACCESS,
+        token_type="access",
     )
 
 
@@ -82,7 +81,7 @@ def create_refresh_token(
         expires_delta=timedelta(
             days=settings.REFRESH_TOKEN_EXPIRE_DAYS,
         ),
-        token_type=TokenType.REFRESH,
+        token_type="refresh",
     )
 
 
