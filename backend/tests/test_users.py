@@ -8,12 +8,13 @@ import pytest
 async def test_register_success(client):
 
     payload = {
+        "name": "newuser",
         "email": "newuser@example.com",
         "password": "password123"
     }
 
     res = await client.post("/users/register", json=payload)
-    print(res.json())
+
     assert res.status_code == 201
 
     data = res.json()
@@ -26,6 +27,7 @@ async def test_register_success(client):
 async def test_register_duplicate_email(client, test_user):
 
     payload = {
+        "name": "duplicate_user",
         "email": test_user.email,
         "password": "password123"
     }

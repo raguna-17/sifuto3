@@ -36,6 +36,7 @@ async def client(db_session):
 @pytest.fixture
 async def test_user(db_session):
     user = User(
+        name="testuser",
         email="test@example.com",
         hashed_password=hash_password("password"),
         is_active=True,
