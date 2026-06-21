@@ -6,7 +6,7 @@ from fastapi import (
 )
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import CurrentUser
+from app.core.dependencies import CurrentUser,AdminUser
 from app.db.session import get_db
 
 from app.domains.users.schema import (
@@ -92,3 +92,11 @@ async def get_me(
     current_user: CurrentUser,
 ):
     return current_user
+
+
+@router.get("")
+async def get_users(
+    _: AdminUser,
+    db: AsyncSession = Depends(get_db),
+):
+    return await UserService.get_all(db)

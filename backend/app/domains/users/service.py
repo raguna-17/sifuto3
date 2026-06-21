@@ -138,3 +138,8 @@ class UserService:
                 User.id == user_id
             )
         )
+
+    @staticmethod
+    async def get_all(db: AsyncSession):
+        result = await db.scalars(select(User))
+        return list(result)

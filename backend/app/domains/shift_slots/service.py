@@ -9,7 +9,6 @@ from app.domains.shift_slots.schema import (
     ShiftSlotUpdate,
 )
 
-
 # ==========================================
 # Exceptions
 # ==========================================
@@ -26,10 +25,31 @@ class ShiftSlotInPastError(Exception):
     pass
 
 
+class ShiftSlotInvalidError(Exception):
+    pass
+
+
+# ==========================================
+# Service
+# ==========================================
+
 class ShiftSlotService:
 
     # ==========================================
-    # 共通バリデーション（業務ルール）
+    # util: datetime normalize
+    # ==========================================
+    @staticmethod
+    def _to_utc(dt: datetime) -> datetime:
+        """
+        naive / aware を必ず UTC aware に統一する
+        """
+        if dt.tzinfo is None:
+            return dt.replace(tzinfo=timezone.utc)
+
+        return dt.astimezone(timezone.utc)
+
+    # ==========================================
+    # validation
     # ==========================================
     @staticmethod
     def _validate_business_rules(
@@ -38,16 +58,22 @@ class ShiftSlotService:
         end_at: datetime,
     ) -> None:
 
+        start_at = ShiftSlotService._to_utc(start_at)
+        end_at = ShiftSlotService._to_utc(end_at)
+
         now = datetime.now(timezone.utc)
+
+        if start_at >= end_at:
+            raise ShiftSlotInvalidError("start_at must be earlier than end_at")
 
         if start_at < now:
             raise ShiftSlotInPastError("cannot create past shift slot")
 
         duration = end_at - start_at
 
-        if duration.total_seconds() > 8646600:
-            raise ValueError("shift slot cannot exceed ")
-
+        # 例：最大100日制限（元の数字はバグっぽかったので現実値に修正）
+        if duration.total_seconds() > 60 * 60 * 24 * 100:
+            raise ShiftSlotInvalidError("shift slot too long")
 
     # ==========================================
     # Create
@@ -58,16 +84,18 @@ class ShiftSlotService:
         slot_in: ShiftSlotCreate,
     ) -> ShiftSlot:
 
+        start_at = ShiftSlotService._to_utc(slot_in.start_at)
+        end_at = ShiftSlotService._to_utc(slot_in.end_at)
+
         ShiftSlotService._validate_business_rules(
-            start_at=slot_in.start_at,
-            end_at=slot_in.end_at,
+            start_at=start_at,
+            end_at=end_at,
         )
 
-        # 重複チェック（修正済み）
         conflict = await db.scalar(
             select(ShiftSlot).where(
-                ShiftSlot.start_at == slot_in.start_at,
-                ShiftSlot.end_at == slot_in.end_at,
+                ShiftSlot.start_at == start_at,
+                ShiftSlot.end_at == end_at,
                 ShiftSlot.required_staff_count == slot_in.required_staff_count,
             )
         )
@@ -76,8 +104,8 @@ class ShiftSlotService:
             raise ShiftSlotConflictError("shift slot already exists")
 
         slot = ShiftSlot(
-            start_at=slot_in.start_at,
-            end_at=slot_in.end_at,
+            start_at=start_at,
+            end_at=end_at,
             required_staff_count=slot_in.required_staff_count,
         )
 
@@ -91,7 +119,6 @@ class ShiftSlotService:
             await db.rollback()
             raise
 
-
     # ==========================================
     # Get all
     # ==========================================
@@ -103,7 +130,6 @@ class ShiftSlotService:
         )
 
         return list(result)
-
 
     # ==========================================
     # Get by id
@@ -117,7 +143,6 @@ class ShiftSlotService:
             raise ShiftSlotNotFoundError()
 
         return slot
-
 
     # ==========================================
     # Update
@@ -133,13 +158,24 @@ class ShiftSlotService:
 
         update_data = slot_in.model_dump(exclude_unset=True)
 
-        new_start = update_data.get("start_at", slot.start_at)
-        new_end = update_data.get("end_at", slot.end_at)
+        new_start = ShiftSlotService._to_utc(
+            update_data.get("start_at", slot.start_at)
+        )
+        new_end = ShiftSlotService._to_utc(
+            update_data.get("end_at", slot.end_at)
+        )
 
         ShiftSlotService._validate_business_rules(
             start_at=new_start,
             end_at=new_end,
         )
+
+        # 反映
+        if "start_at" in update_data:
+            update_data["start_at"] = new_start
+
+        if "end_at" in update_data:
+            update_data["end_at"] = new_end
 
         for field, value in update_data.items():
             setattr(slot, field, value)
@@ -152,7 +188,6 @@ class ShiftSlotService:
         except Exception:
             await db.rollback()
             raise
-
 
     # ==========================================
     # Delete

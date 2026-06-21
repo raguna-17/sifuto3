@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timezone
 
 from pydantic import BaseModel, ConfigDict, Field, model_validator
 
@@ -18,6 +18,15 @@ class ShiftSlotBase(BaseModel):
     )
 
 
+    @model_validator(mode="after")
+    def normalize_timezone(self):
+        if self.start_at.tzinfo is None:
+            self.start_at = self.start_at.replace(tzinfo=timezone.utc)
+
+        if self.end_at.tzinfo is None:
+            self.end_at = self.end_at.replace(tzinfo=timezone.utc)
+
+        return self
 
     @model_validator(mode="after")
     def validate_time_range(self):

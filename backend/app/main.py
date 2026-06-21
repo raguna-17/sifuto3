@@ -10,7 +10,9 @@ from app.domains.users.router import router as users_router
 from app.domains.shift_slots.router import router as shift_slots_router
 from app.domains.shift_preferences.router import router as shift_preferences_router
 from app.domains.shift_assignments.router import router as shift_assignments_router
-
+from app.domains.scheduler import (
+    router as scheduler_router,
+)
 from app.domains.shift_preferences.service import ShiftPreferenceConflictError
 from app.domains.shift_preferences.service import ShiftPreferenceNotFoundError
 
@@ -51,6 +53,7 @@ def create_app() -> FastAPI:
     app.include_router(shift_slots_router)
     app.include_router(shift_preferences_router)
     app.include_router(shift_assignments_router)
+    app.include_router(scheduler_router)
 
     # -------------------------
     # exception handlers

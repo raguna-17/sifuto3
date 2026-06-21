@@ -1,21 +1,19 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
-
 import { register } from "./api";
 
 const RegisterPage = () => {
     const navigate = useNavigate();
 
+    const [name, setName] = useState("");
     const [email, setEmail] = useState("");
-    const [password, setPassword] =
-        useState("");
+    const [password, setPassword] = useState("");
 
     const [error, setError] = useState("");
-    const [loading, setLoading] =
-        useState(false);
+    const [loading, setLoading] = useState(false);
 
     const validate = () => {
-        if (!email || !password) {
+        if (!name || !email || !password) {
             return "全て入力してください";
         }
 
@@ -36,7 +34,6 @@ const RegisterPage = () => {
         setError("");
 
         const errMsg = validate();
-
         if (errMsg) {
             setError(errMsg);
             return;
@@ -45,29 +42,24 @@ const RegisterPage = () => {
         try {
             setLoading(true);
 
-            await register(email, password);
-
-            alert(
-                "登録成功。ログインしてください。"
-            );
+            await register(name, email, password);
 
             navigate("/login");
 
         } catch (err) {
-            setError(err.message);
+            const msg =
+                err?.response?.data?.detail ||
+                err.message ||
+                "登録に失敗しました";
 
+            setError(msg);
         } finally {
             setLoading(false);
         }
     };
 
     return (
-        <div
-            style={{
-                maxWidth: "400px",
-                margin: "80px auto",
-            }}
-        >
+        <div style={{ maxWidth: "400px", margin: "80px auto" }}>
             <h1>新規登録</h1>
 
             {error && (
@@ -79,12 +71,23 @@ const RegisterPage = () => {
             <form onSubmit={handleSubmit}>
                 <div style={{ marginBottom: "12px" }}>
                     <input
+                        type="text"
+                        placeholder="名前"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        style={{
+                            width: "100%",
+                            padding: "10px",
+                        }}
+                    />
+                </div>
+
+                <div style={{ marginBottom: "12px" }}>
+                    <input
                         type="email"
                         placeholder="メールアドレス"
                         value={email}
-                        onChange={(e) =>
-                            setEmail(e.target.value)
-                        }
+                        onChange={(e) => setEmail(e.target.value)}
                         style={{
                             width: "100%",
                             padding: "10px",
@@ -97,9 +100,7 @@ const RegisterPage = () => {
                         type="password"
                         placeholder="パスワード"
                         value={password}
-                        onChange={(e) =>
-                            setPassword(e.target.value)
-                        }
+                        onChange={(e) => setPassword(e.target.value)}
                         style={{
                             width: "100%",
                             padding: "10px",
@@ -120,11 +121,8 @@ const RegisterPage = () => {
             </form>
 
             <p style={{ marginTop: "16px" }}>
-                すでにアカウントある？
-                {" "}
-                <Link to="/login">
-                    ログインはこちら
-                </Link>
+                すでにアカウントある？{" "}
+                <Link to="/login">ログインはこちら</Link>
             </p>
         </div>
     );

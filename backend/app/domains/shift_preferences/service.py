@@ -110,11 +110,13 @@ class ShiftPreferenceService:
     async def get_by_user(
         db: AsyncSession,
         user_id: int,
+        shift_slot_id: int,
     ) -> list[ShiftPreference]:
 
         result = await db.scalars(
             select(ShiftPreference).where(
-                ShiftPreference.user_id == user_id
+                ShiftPreference.user_id == user_id,
+                ShiftPreference.shift_slot_id == shift_slot_id,
             )
         )
 

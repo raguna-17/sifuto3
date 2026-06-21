@@ -59,12 +59,14 @@ async def create_preference(
     response_model=list[ShiftPreferenceResponse],
 )
 async def get_my_preferences(
+    shift_slot_id: int,
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
 ):
     return await ShiftPreferenceService.get_by_user(
         db=db,
         user_id=current_user.id,
+        shift_slot_id=shift_slot_id,
     )
 
 

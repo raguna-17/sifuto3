@@ -5,6 +5,7 @@ from sqlalchemy.exc import IntegrityError
 from app.domains.users.model import User
 from app.domains.shift_slots.model import ShiftSlot
 from app.domains.shift_assignments.model import ShiftAssignment
+from app.domains.shift_assignments.schema import ShiftAssignmentCreate
 
 
 # =========================
@@ -101,7 +102,50 @@ class ShiftAssignmentService:
         except Exception:
             await db.rollback()
             raise
+    
 
+    @staticmethod
+    async def bulk_create(
+        db: AsyncSession,
+        user_id: int,
+        slot_ids: list[int],
+    ) -> list[ShiftAssignment]:
+
+        results = []
+
+        try:
+            for slot_id in slot_ids:
+
+                existing = await db.scalar(
+                    select(ShiftAssignment).where(
+                        ShiftAssignment.user_id == user_id,
+                        ShiftAssignment.slot_id == slot_id,
+                    )
+                )
+
+                if existing:
+                    continue
+
+                assignment = ShiftAssignment(
+                    user_id=user_id,
+                    slot_id=slot_id,
+                    is_auto=True,
+                    is_confirmed=False,
+                )
+
+                db.add(assignment)
+                results.append(assignment)
+
+            await db.commit()
+
+            for r in results:
+                await db.refresh(r)
+
+            return results
+
+        except Exception as e:
+            await db.rollback()
+            raise e
     # =========================
     # get all
     # =========================

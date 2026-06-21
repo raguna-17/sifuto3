@@ -10,73 +10,73 @@ import Layout from "./layouts/Layout";
 import LoginPage from "./features/auth/LoginPage";
 import RegisterPage from "./features/auth/RegisterPage";
 
-import Home from "./pages/Home";
+import ShiftSlotListPage from "./features/shiftSlots/ShiftSlotListPage";
+import ShiftSlotDetailPage from "./features/shiftSlots/ShiftSlotDetailPage";
+import ShiftSlotCreatePage from "./features/shiftSlots/ShiftSlotCreatePage";
 
-// products
-import ProductListPage from "./features/products/pages/ProductListPage";
-import ProductDetailPage from "./features/products/pages/ProductDetailPage";
-import ProductCreatePage from "./features/products/pages/ProductCreatePage";
+import ShiftFlowCreatePage from "./features/shiftFlow/ShiftFlowCreatePage";
+import ShiftFlowViewPage from "./features/shiftFlow/ShiftFlowViewPage";
 
-// cart
-import CartPage from "./features/cart/CartPage";
-
-// orders
-import OrderPage from "./features/orders/OrderPage";
-
+import UsersPage from "./features/users/UsersPage";
 
 // -------------------------
-// auth check
+// 共通JWT解析
 // -------------------------
+const getRoleFromToken = () => {
+  const token = localStorage.getItem("token");
+
+  if (!token) return null;
+
+  try {
+    const payload = JSON.parse(atob(token.split(".")[1]));
+    return payload.role || null;
+  } catch {
+    return null;
+  }
+};
 
 const isAuthenticated = () => {
-  return !!localStorage.getItem(
-    "token"
-  );
+  return !!localStorage.getItem("token");
 };
 
-
 // -------------------------
-// private route
+// Guards
 // -------------------------
-
-const PrivateRoute = ({
-  children,
-}) => {
-  return isAuthenticated()
-    ? children
-    : (
-      <Navigate
-        to="/login"
-        replace
-      />
-    );
+const PrivateRoute = ({ children }) => {
+  if (!isAuthenticated()) {
+    return <Navigate to="/login" replace />;
+  }
+  return children;
 };
 
+// 複数ロール対応に拡張
+const RoleRoute = ({ roles = [], children }) => {
+  const userRole = getRoleFromToken();
 
+  if (!userRole) {
+    return <Navigate to="/login" replace />;
+  }
+
+  if (!roles.includes(userRole)) {
+    return <Navigate to="/" replace />;
+  }
+
+  return children;
+};
+
+// -------------------------
+// App
+// -------------------------
 function App() {
   return (
     <BrowserRouter>
       <Routes>
 
-        {/* -------------------------
-            public
-        ------------------------- */}
+        {/* public */}
+        <Route path="/login" element={<LoginPage />} />
+        <Route path="/register" element={<RegisterPage />} />
 
-        <Route
-          path="/login"
-          element={<LoginPage />}
-        />
-
-        <Route
-          path="/register"
-          element={<RegisterPage />}
-        />
-
-
-        {/* -------------------------
-            private
-        ------------------------- */}
-
+        {/* private layout */}
         <Route
           path="/"
           element={
@@ -86,68 +86,54 @@ function App() {
           }
         >
 
-          {/* home */}
-          <Route
-            index
-            element={<Home />}
-          />
+          <Route index element={<ShiftSlotListPage />} />
 
-
-          {/* -------------------------
-              products
-          ------------------------- */}
+          {/* shift slots */}
+          <Route path="shift-slots" element={<ShiftSlotListPage />} />
 
           <Route
-            path="products"
-            element={<ProductListPage />}
+            path="shift-slots/:id"
+            element={<ShiftSlotDetailPage />}
           />
 
           <Route
-            path="products/create"
-            element={<ProductCreatePage />}
+            path="shift-slots/create"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <ShiftSlotCreatePage />
+              </RoleRoute>
+            }
+          />
+
+          {/* shift flow */}
+          <Route
+            path="shift-flow/create"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <ShiftFlowCreatePage />
+              </RoleRoute>
+            }
           />
 
           <Route
-            path="products/:id"
-            element={<ProductDetailPage />}
+            path="shift-flow/view"
+            element={<ShiftFlowViewPage />}
           />
 
-
-          {/* -------------------------
-              cart
-          ------------------------- */}
-
+          {/* users */}
           <Route
-            path="cart"
-            element={<CartPage />}
-          />
-
-
-          {/* -------------------------
-              orders
-          ------------------------- */}
-
-          <Route
-            path="orders"
-            element={<OrderPage />}
+            path="users"
+            element={
+              <RoleRoute roles={["admin"]}>
+                <UsersPage />
+              </RoleRoute>
+            }
           />
 
         </Route>
 
-
-        {/* -------------------------
-            not found
-        ------------------------- */}
-
-        <Route
-          path="*"
-          element={
-            <Navigate
-              to="/"
-              replace
-            />
-          }
-        />
+        {/* fallback */}
+        <Route path="*" element={<Navigate to="/" replace />} />
 
       </Routes>
     </BrowserRouter>
