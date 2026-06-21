@@ -1,203 +1,163 @@
-① users
-② positions
-③ shift_slots
-④ shift_preferences
-⑤ shift_assignments
-⑥ scheduler
+シフト管理・自動割り当てシステム API
+
+シフト希望・制約条件・人員要件をもとに、ユーザーを自動で割り当てるバックエンドシステム。
+
+手動調整と自動生成の両方に対応し、管理者は生成結果を確認したうえで確定できる構成になっている。
+
+概要
+
+本システムは以下の課題を解決するために設計されている：
+
+シフト調整の属人化
+人手による割り当てミス
+希望と実際の乖離
+人員不足・過剰配置の発生
+
+これをスコアベースの割り当てアルゴリズムで自動化する。
+
+システム構成
+バックエンド（FastAPI）
 
 
+https://www.youtube.com/watch?v=chMBNJy8fHg
 
+レイヤー構成：
 
-# EC App
+API Layer（Router）
+Service Layer（ビジネスロジック）
+Domain Model（SQLAlchemy）
+Scheduler Engine（割り当てアルゴリズム）
 
-FastAPI + React + PostgreSQL を用いて開発した EC サービスです。
+特徴：
 
-JWT 認証、権限制御、注文トランザクション、状態遷移制御などを実装し、
-単なる CRUD ではなく、業務システムを意識したバックエンド設計を行いました。
+すべての業務ロジックはService層に集約
+Routerは薄いAPI定義のみ
+ドメインごとに責務分離
+フロントエンド（React）
 
-Docker による開発環境統一、Alembic によるマイグレーション管理にも対応しています。
+※バックエンド利用のための管理UIとして実装
 
----
+主な機能：
 
-# Demo
+シフト生成（管理者）
+生成結果の編集
+確定保存
+ユーザー一覧取得
+ドメイン設計
+ShiftSlot（シフト枠）
 
-## Demo Video
+勤務枠を表すエンティティ。
 
-動画を見る
+制約：
 
----
+開始時刻 < 終了時刻
+過去日時は禁止
+最大期間制限あり
+required_staff_count による定員管理
+重複作成防止
+ShiftPreference（希望）
 
-# Features
+ユーザーのシフト希望を表現する。
 
-## Authentication
+優先度：
 
-- JWT Authentication
-- Access Token / Refresh Token 分離
-- Token Type Validation
-- Password Hashing（Argon2）
-- 権限制御（Admin / User）
+REQUIRED（必須）
+PREFERRED（希望）
+NEUTRAL（通常）
+AVOID（避けたい）
+UNAVAILABLE（不可）
 
-## Product
+制約：
 
-- 商品一覧取得
-- 商品詳細取得
-- 商品作成（Admin）
-- 在庫管理
-- 論理削除
+ユーザー × シフト枠で1件のみ
+更新時も重複チェックを維持
+ShiftAssignment（割り当て結果）
 
-## Cart
+実際に確定したシフト割り当て。
 
-- カート追加
-- カート一覧取得
-- カート削除
+制約：
 
-## Order
+同一ユーザーの重複割り当て禁止
+シフト枠の定員制限あり
+手動・自動割り当て両対応
+スケジューリングアルゴリズム
+概要
 
-- 注文作成
-- 注文履歴取得
-- 注文詳細取得
-- 注文ステータス更新
-- 状態遷移制御
-- 管理者削除
+ユーザーの希望と制約をスコアリングし、各シフト枠に対して最適な人員を割り当てる。
 
----
-
-# Business Logic
-
-実務を意識し、以下の業務ロジックを実装しています。
-
-- 在庫チェック
-- 注文トランザクション管理
-- 不正ステータス遷移防止
-- Token Type Validation
-- 管理者権限制御
-
-## Transaction Management
-
-注文作成では、
-在庫確認と注文生成を単一トランザクションとして扱っています。
-
-```python id="u21mfa"
-try:
-    ...
-    await db.commit()
-
-except Exception:
-    await db.rollback()
-
-事前検証を行い、
-データ整合性を維持しています。
-
-if product.stock < item["quantity"]:
-    raise ValueError("insufficient stock")
-Order Status Transition
-
-注文ステータスは不正遷移を防ぐため、
-遷移可能状態を制御しています。
-
-allowed_transitions = {
-    OrderStatus.PENDING: [
-        OrderStatus.PAID,
-        OrderStatus.CANCELLED,
-    ],
-    OrderStatus.PAID: [
-        OrderStatus.SHIPPED
-    ],
-}
-Architecture
-
-ドメイン単位で分割したレイヤードアーキテクチャを採用しています。
-
-Domain Structure
-product
-cart
-order
-Layer Structure
-router      # API endpoint
-service     # business logic
-repository  # DB access
-model       # ORM model
-schema      # Pydantic schema
-Design Principles
-Service 層へ業務ロジックを集約
-Repository 層で DB アクセスを抽象化
-Transaction 境界を Service 層で管理
-状態遷移ルールを集約し、不正更新を防止
-
-FastAPI の Depends を利用し、
-認証・認可制御を実装しています。
-
-API Design
-
-RESTful API を意識して設計しています。
-
-POST /auth/login
-POST /orders/
-GET /orders/me
-PUT /orders/{id}/status
-POST /cart/
-Tech Stack
-Backend
+スコア定義
+REQUIRED：+100
+PREFERRED：+10
+NEUTRAL：+1
+AVOID：-20
+UNAVAILABLE：-999
+処理フロー
+全ユーザー・全シフト枠を取得
+各ユーザーに対してスコア計算
+スコア順にソート
+required_staff_count まで割り当て
+重複割り当てを防止
+モード
+generate
+→ ドライラン（確認用）
+confirm
+→ DBへ確定保存
+API一覧
+認証
+POST /login
+POST /register
+シフト枠
+GET /shift-slots
+POST /shift-slots
+GET /shift-slots/{id}
+希望登録
+POST /shift-preferences
+GET /shift-preferences
+割り当て
+GET /shift-assignments
+POST /shift-assignments/bulk/{user_id}
+GET /shift-assignments/me
+スケジューラ
+POST /scheduler/generate
+POST /scheduler/confirm
+シフト生成フロー
+管理者がシフト生成を実行
+スコアベースで仮割り当て生成
+フロントで編集可能な形式で表示
+管理者が修正
+確定保存でDBへ反映
+技術スタック
 FastAPI
 SQLAlchemy（Async）
 PostgreSQL
 Alembic
-JWT（python-jose）
-Passlib / Argon2
-Pytest
-Docker
-Frontend
-React（Vite）
-React Router
+Docker / Docker Compose
+React（管理UI）
 Axios
-Testing
+設計上の特徴
+ドメインごとのService分離
+スコアベースの割り当てアルゴリズム
+明示的な例外設計（業務エラーの表現）
+generate / confirm の二段階設計
+トランザクション安全性を考慮したDB操作
+UTC統一による日時バグ対策
+このシステムが解決する問題
 
-pytest + httpx による API テストを実装しています。
+従来の手動シフト管理では：
 
-Test Examples
-ログイン認証
-注文作成
-在庫不足
-注文詳細取得
-ステータス更新
-不正状態遷移
-管理者削除
-Coverage
-TOTAL 69.2%
-13 passed
+調整コストが高い
+属人性が高い
+希望反映が困難
+人的ミスが発生
 
-主要ユースケースを中心に、
-正常系・異常系の両方をテストしています。
+本システムはこれを：
 
-Infrastructure
-Docker による開発環境統一
-PostgreSQL コンテナ
-FastAPI コンテナ
-Alembic によるマイグレーション管理
-環境変数による設定管理
-Development
-Start
-docker compose up --build
-Migration
-alembic upgrade head
-Test
-pytest --cov
-Future Improvements
-Refresh Token Rotation
-Redis Cache
-CI/CD
-Stripe 決済対応
-RBAC 拡張
-AWS Deploy
-Motivation
+「ルールベース + スコアリング」による再現可能な自動割り当てで解決する。
 
-単なる CRUD 実装ではなく、
+まとめ
 
-認証
-権限制御
-トランザクション
-状態遷移
-保守性
+このプロジェクトは単なるCRUD APIではなく、
 
-を意識し、
-業務システムを想定した設計・実装を行いました。
+「制約条件付きリソース割り当て問題を解くドメインシステム」
+
+として設計されている。
