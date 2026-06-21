@@ -13,7 +13,7 @@ async def test_register_success(client):
     }
 
     res = await client.post("/users/register", json=payload)
-
+    print(res.json())
     assert res.status_code == 201
 
     data = res.json()
