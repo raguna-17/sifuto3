@@ -9,10 +9,13 @@ from app.core.config import get_settings
 
 DATABASE_URL = get_settings().DATABASE_URL
 
+from sqlalchemy.pool import NullPool
+
 engine = create_async_engine(
     DATABASE_URL,
     echo=False,
-    pool_pre_ping=True,
+    #pool_pre_ping=True,
+    poolclass=NullPool,
 )
 
 SessionFactory = async_sessionmaker(
