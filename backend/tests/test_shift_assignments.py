@@ -1,6 +1,6 @@
 ﻿import pytest
 from sqlalchemy.ext.asyncio import AsyncSession
-
+from datetime import datetime, timezone
 from app.domains.shift_assignments.service import (
     ShiftAssignmentService,
     DuplicateAssignmentError,
@@ -30,8 +30,8 @@ async def create_user(db: AsyncSession):
 
 async def create_slot(db: AsyncSession, capacity=1):
     slot = ShiftSlot(
-        start_at="2025-01-01T00:00:00+00:00",
-        end_at="2025-01-01T08:00:00+00:00",
+        start_at=datetime(2025, 1, 1, 0, 0, tzinfo=timezone.utc),
+        end_at=datetime(2025, 1, 1, 8, 0, tzinfo=timezone.utc),
         required_staff_count=capacity,
     )
     db.add(slot)
