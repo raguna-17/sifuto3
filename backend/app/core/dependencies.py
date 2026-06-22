@@ -11,12 +11,7 @@ from app.domains.users.model import User
 from app.domains.users.service import UserService
 
 
-# ==================================================
-# OAuth2
-# ==================================================
-oauth2_scheme = OAuth2PasswordBearer(
-    tokenUrl="/users/login",
-)
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/users/login")
 
 
 # ==================================================
@@ -27,30 +22,32 @@ async def get_current_user(
     db: AsyncSession = Depends(get_db),
 ) -> User:
 
+    credentials_exception = HTTPException(
+        status_code=status.HTTP_401_UNAUTHORIZED,
+        detail="Invalid authentication credentials",
+    )
+
     try:
         payload = decode_token(token)
-
-        if payload.get("type") != "access":
-            raise HTTPException(
-                status_code=status.HTTP_401_UNAUTHORIZED,
-                detail="Invalid token type",
-            )
-
-        user_id = int(payload["sub"])
-
     except Exception:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="Invalid token",
-        )
+        raise credentials_exception
+
+    if payload.get("type") != "access":
+        raise credentials_exception
+
+    sub = payload.get("sub")
+    if sub is None:
+        raise credentials_exception
+
+    try:
+        user_id = int(sub)
+    except ValueError:
+        raise credentials_exception
 
     user = await UserService.get_by_id(db, user_id)
 
     if not user:
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
-            detail="User not found",
-        )
+        raise credentials_exception
 
     if not user.is_active:
         raise HTTPException(
@@ -61,9 +58,6 @@ async def get_current_user(
     return user
 
 
-# ==================================================
-# role-based guard (core)
-# ==================================================
 def require_roles(*allowed_roles: UserRole):
 
     async def checker(
@@ -73,7 +67,7 @@ def require_roles(*allowed_roles: UserRole):
         if user.role == UserRole.ADMIN:
             return user
 
-        if user.role not in allowed_roles:
+        if allowed_roles and user.role not in allowed_roles:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN,
                 detail="Forbidden",
@@ -82,20 +76,3 @@ def require_roles(*allowed_roles: UserRole):
         return user
 
     return checker
-
-
-get_admin_user = require_roles(UserRole.ADMIN)
-
-
-# ==================================================
-# convenience shortcuts
-# ==================================================
-CurrentUser = Annotated[
-    User,
-    Depends(get_current_user),
-]
-
-AdminUser = Annotated[
-    User,
-    Depends(require_roles(UserRole.ADMIN)),
-]

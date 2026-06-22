@@ -4,6 +4,7 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 class Settings(BaseSettings):
     DATABASE_URL: str
+    ENV: str = "dev"
 
     JWT_SECRET_KEY: str
     JWT_ALGORITHM: str = "HS256"
