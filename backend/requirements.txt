@@ -16,6 +16,6 @@ alembic
 python-multipart
 ruff
 pytest
-pytest-asyncio
+pytest-asyncio==0.23.8
 pytest-cov
 httpx

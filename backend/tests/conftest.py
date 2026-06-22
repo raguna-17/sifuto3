@@ -10,8 +10,11 @@ from app.core.security import hash_password
 @pytest.fixture
 async def db_session():
     async with SessionFactory() as session:
-        yield session
-        await session.rollback()
+        try:
+            yield session
+        finally:
+            await session.rollback()
+            await session.close()
 
 
 @pytest.fixture
