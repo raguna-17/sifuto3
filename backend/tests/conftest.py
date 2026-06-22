@@ -13,7 +13,7 @@ async def db_session():
         try:
             yield session
         finally:
-            await session.rollback()
+            #await session.rollback()
             await session.close()
 
 

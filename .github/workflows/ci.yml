@@ -58,6 +58,10 @@ jobs:
           pip install -r requirements.txt
         
 
+      - name: Show versions
+        run: |
+          pip freeze
+
       # -------------------------
       # Wait for DB
       # -------------------------
