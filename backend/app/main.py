@@ -10,9 +10,8 @@ from app.domains.users.router import router as users_router
 from app.domains.shift_slots.router import router as shift_slots_router
 from app.domains.shift_preferences.router import router as shift_preferences_router
 from app.domains.shift_assignments.router import router as shift_assignments_router
-from app.domains.scheduler import (
-    router as scheduler_router,
-)
+from app.domains.scheduler.router import router as scheduler_router
+
 from app.domains.shift_preferences.service import ShiftPreferenceConflictError
 from app.domains.shift_preferences.service import ShiftPreferenceNotFoundError
 
@@ -73,16 +72,12 @@ def create_app() -> FastAPI:
             content={"detail": "shift preference not found"},
         )
 
-
-
-
     @app.exception_handler(DuplicateAssignmentError)
     async def duplicate_handler(request: Request, exc: DuplicateAssignmentError):
         return JSONResponse(
             status_code=409,
             content={"detail": "duplicate assignment"},
         )
-
 
     @app.exception_handler(AssignmentCapacityError)
     async def capacity_handler(request: Request, exc: AssignmentCapacityError):
@@ -97,6 +92,7 @@ def create_app() -> FastAPI:
             status_code=404,
             content={"detail": "shift slot not found"},
         )
+
     # -------------------------
     # startup / shutdown logs
     # -------------------------

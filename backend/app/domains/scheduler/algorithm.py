@@ -1,28 +1,16 @@
 import logging
 from collections import defaultdict
 
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from app.db.session import get_db
-from app.core.dependencies import AdminUser
 from app.core.enums import PreferencePriority
-
 from app.domains.shift_slots.model import ShiftSlot
 from app.domains.shift_preferences.model import ShiftPreference
 from app.domains.users.model import User
-from app.domains.shift_assignments.service import ShiftAssignmentService
 
 
-router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 logger = logging.getLogger(__name__)
 
 
-# ==================================================
-# scheduler logic (全部ここ)
-# ==================================================
-class ShiftScheduler:
+class ShiftSchedulerAlgorithm:
 
     @staticmethod
     def generate_schedule(
@@ -48,7 +36,7 @@ class ShiftScheduler:
 
                 prefs_for_user = user_prefs.get(user.id, [])
 
-                score = ShiftScheduler._calculate_score(
+                score = ShiftSchedulerAlgorithm._calculate_score(
                     slot=slot,
                     prefs=prefs_for_user,
                 )
@@ -109,63 +97,3 @@ class ShiftScheduler:
             return -20
 
         return 0
-
-
-# ==================================================
-# DB loading (ここも統合)
-# ==================================================
-async def load_scheduler_data(db: AsyncSession):
-    slots = (await db.scalars(select(ShiftSlot))).all()
-    prefs = (await db.scalars(select(ShiftPreference))).all()
-    users = (await db.scalars(select(User))).all()
-
-    return slots, prefs, users
-
-
-# ==================================================
-# API
-# ==================================================
-@router.post("/generate")
-async def generate_schedule(
-    _: AdminUser,
-    db: AsyncSession = Depends(get_db),
-):
-
-    slots, prefs, users = await load_scheduler_data(db)
-
-    result = ShiftScheduler.generate_schedule(
-        slots=slots,
-        prefs=prefs,
-        users=users,
-    )
-
-    return {
-        "message": "schedule generated",
-        "assignments": result,
-    }
-
-
-@router.post("/confirm")
-async def confirm_schedule(
-    _: AdminUser,
-    db: AsyncSession = Depends(get_db),
-):
-
-    slots, prefs, users = await load_scheduler_data(db)
-
-    result = ShiftScheduler.generate_schedule(
-        slots=slots,
-        prefs=prefs,
-        users=users,
-    )
-
-    for slot_id, user_ids in result.items():
-        for user_id in user_ids:
-            await ShiftAssignmentService.create(
-                db=db,
-                user_id=user_id,
-                slot_id=slot_id,
-                is_auto=True,
-            )
-
-    return {"status": "ok"}
