@@ -1,22 +1,54 @@
 import pytest
 from httpx import AsyncClient, ASGITransport
+from sqlalchemy.ext.asyncio import (
+    AsyncSession,
+    async_sessionmaker,
+    create_async_engine,
+)
+from sqlalchemy.pool import NullPool
 
 from app.main import app
-from app.db.session import SessionFactory, get_db
+from app.db.session import get_db
 from app.domains.users.model import User
 from app.core.security import hash_password
+from app.core.config import get_settings
 
 
-# -------------------------
-# API Client
-# -------------------------
+settings = get_settings()
+
+
+# ==================================================
+# TEST ENGINE（本番と完全分離）
+# ==================================================
+TEST_ENGINE = create_async_engine(
+    settings.DATABASE_URL,
+    echo=False,
+    poolclass=NullPool,
+)
+
+TestSessionFactory = async_sessionmaker(
+    bind=TEST_ENGINE,
+    class_=AsyncSession,
+    expire_on_commit=False,
+)
+
+
+# ==================================================
+# override dependency
+# ==================================================
+async def override_get_db():
+    async with TestSessionFactory() as session:
+        try:
+            yield session
+        finally:
+            await session.rollback()
+
+
+# ==================================================
+# API CLIENT FIXTURE
+# ==================================================
 @pytest.fixture
 async def client():
-
-    async def override_get_db():
-        async with SessionFactory() as session:
-            yield session
-
     app.dependency_overrides[get_db] = override_get_db
 
     async with AsyncClient(
@@ -28,25 +60,26 @@ async def client():
     app.dependency_overrides.clear()
 
 
-# -------------------------
-# DB Session
-# -------------------------
+# ==================================================
+# DB SESSION FIXTURE（単体テスト用）
+# ==================================================
 @pytest.fixture
 async def db_session():
-    async with SessionFactory() as session:
+    async with TestSessionFactory() as session:
         try:
             yield session
         finally:
             await session.rollback()
+            await session.close()
 
 
-# -------------------------
-# Test User
-# -------------------------
+# ==================================================
+# TEST USER
+# ==================================================
 @pytest.fixture
 async def test_user():
 
-    async with SessionFactory() as session:
+    async with TestSessionFactory() as session:
 
         user = User(
             name="testuser",
@@ -56,7 +89,6 @@ async def test_user():
         )
 
         session.add(user)
-
         await session.commit()
         await session.refresh(user)
 
@@ -66,6 +98,9 @@ async def test_user():
         await session.commit()
 
 
+# ==================================================
+# AUTH HEADER
+# ==================================================
 @pytest.fixture
 async def auth_headers(client, test_user):
 
