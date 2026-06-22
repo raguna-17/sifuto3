@@ -22,8 +22,7 @@
 ## 👉 :https://www.youtube.com/watch?v=chMBNJy8fHg
 
 
-## システム構成
-## バックエンド（FastAPI）
+## システム構成(バックエンド:FastAPI)
 
 
 ## レイヤー構成：
@@ -97,11 +96,11 @@
 ## 🧮 スコア定義
 
 
-REQUIRED : +100
-PREFERRED : +10
-NEUTRAL : +1
-AVOID : -20
-UNAVAILABLE : -999
+* REQUIRED : +100
+* PREFERRED : +10
+* NEUTRAL : +1
+* AVOID : -20
+* UNAVAILABLE : -999
 
 
 ---
@@ -132,34 +131,34 @@ UNAVAILABLE : -999
 
 ### 🔐 認証
 
-POST /login
-POST /register
+* POST /login
+* POST /register
 
 
 ### 📅 シフト枠
 
-GET /shift-slots
-POST /shift-slots
-GET /shift-slots/{id}
+* GET /shift-slots
+* POST /shift-slots
+* GET /shift-slots/{id}
 
 
 ### 🙋 希望登録
 
-POST /shift-preferences
-GET /shift-preferences
+* POST /shift-preferences
+* GET /shift-preferences
 
 
 ### 👤 割り当て
 
-GET /shift-assignments
-POST /shift-assignments/bulk/{user_id}
-GET /shift-assignments/me
+* GET /shift-assignments
+* POST /shift-assignments/bulk/{user_id}
+* GET /shift-assignments/me
 
 
 ### 🧠 スケジューラ
 
-POST /scheduler/generate
-POST /scheduler/confirm
+* POST /scheduler/generate
+* POST /scheduler/confirm
 
 
 ---
@@ -177,13 +176,13 @@ POST /scheduler/confirm
 ## 🧰 技術スタック
 
 
-FastAPI
-SQLAlchemy (Async)
-PostgreSQL
-Alembic
-Docker / Docker Compose
-React（管理UI）
-Axios
+- FastAPI
+- SQLAlchemy (Async)
+- PostgreSQL
+- Alembic
+- Docker / Docker Compose
+- React（管理UI）
+- Axios
 
 
 ---
