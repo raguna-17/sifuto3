@@ -1,4 +1,5 @@
 ﻿import pytest
+import uuid
 from sqlalchemy.ext.asyncio import AsyncSession
 from datetime import datetime, timezone
 from app.domains.shift_assignments.service import (
@@ -16,10 +17,12 @@ from app.domains.users.model import User
 # =========================
 # helper
 # =========================
-async def create_user(db: AsyncSession):
+async def create_user(db):
+    unique_email = f"test-{uuid.uuid4()}@test.com"
+
     user = User(
         name="test",
-        email="test@test.com",
+        email=unique_email,
         hashed_password="hashed",
     )
     db.add(user)
