@@ -7,28 +7,20 @@ from app.domains.users.model import User
 from app.core.security import hash_password
 
 
+# -------------------------
+# API Client
+# -------------------------
 @pytest.fixture
-async def db_session():
-    async with SessionFactory() as session:
-        try:
-            yield session
-        finally:
-            #await session.rollback()
-            await session.close()
-
-
-@pytest.fixture
-async def client(db_session):
+async def client():
 
     async def override_get_db():
-        yield db_session
+        async with SessionFactory() as session:
+            yield session
 
     app.dependency_overrides[get_db] = override_get_db
 
-    transport = ASGITransport(app=app)
-
     async with AsyncClient(
-        transport=transport,
+        transport=ASGITransport(app=app),
         base_url="http://test",
     ) as ac:
         yield ac
@@ -36,17 +28,39 @@ async def client(db_session):
     app.dependency_overrides.clear()
 
 
+# -------------------------
+# DB Session
+# -------------------------
 @pytest.fixture
-async def test_user(db_session):
-    user = User(
-        name="testuser",
-        email="test@example.com",
-        hashed_password=hash_password("password"),
-        is_active=True,
-    )
+async def db_session():
+    async with SessionFactory() as session:
+        try:
+            yield session
+        finally:
+            await session.rollback()
 
-    db_session.add(user)
-    await db_session.flush()
-    await db_session.refresh(user)
 
-    return user
+# -------------------------
+# Test User
+# -------------------------
+@pytest.fixture
+async def test_user():
+
+    async with SessionFactory() as session:
+
+        user = User(
+            name="testuser",
+            email="test@example.com",
+            hashed_password=hash_password("password"),
+            is_active=True,
+        )
+
+        session.add(user)
+
+        await session.commit()
+        await session.refresh(user)
+
+        yield user
+
+        await session.delete(user)
+        await session.commit()
