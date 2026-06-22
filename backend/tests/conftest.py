@@ -64,3 +64,21 @@ async def test_user():
 
         await session.delete(user)
         await session.commit()
+
+
+@pytest.fixture
+async def auth_headers(client, test_user):
+
+    res = await client.post(
+        "/users/login",
+        json={
+            "email": test_user.email,
+            "password": "password",
+        },
+    )
+
+    token = res.json()["access_token"]
+
+    return {
+        "Authorization": f"Bearer {token}"
+    }
