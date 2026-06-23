@@ -8,7 +8,7 @@ from sqlalchemy.ext.asyncio import (
 from sqlalchemy.pool import NullPool
 
 from app.main import app
-from app.db.session import get_db
+from app.db.session import get_db as app_get_db
 from app.domains.users.model import User
 from app.core.security import hash_password
 from app.core.enums import UserRole
@@ -50,7 +50,7 @@ async def override_get_db():
 # ==================================================
 @pytest.fixture
 async def client():
-    app.dependency_overrides[get_db] = override_get_db
+    app.dependency_overrides[app_get_db] = override_get_db
 
     async with AsyncClient(
         transport=ASGITransport(app=app),
