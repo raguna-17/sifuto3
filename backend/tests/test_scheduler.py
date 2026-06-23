@@ -14,6 +14,7 @@ async def test_generate_schedule(client, auth_headers):
         "/scheduler/generate",
         headers=auth_headers,
     )
+    print(res.text)
 
     assert res.status_code == 200
 
