@@ -11,9 +11,12 @@ from app.domains.shift_slots.router import router as shift_slots_router
 from app.domains.shift_preferences.router import router as shift_preferences_router
 from app.domains.shift_assignments.router import router as shift_assignments_router
 from app.domains.scheduler.router import router as scheduler_router
+from app.domains.exports.router import router as exports_router  # 👈 追加
 
-from app.domains.shift_preferences.service import ShiftPreferenceConflictError
-from app.domains.shift_preferences.service import ShiftPreferenceNotFoundError
+from app.domains.shift_preferences.service import (
+    ShiftPreferenceConflictError,
+    ShiftPreferenceNotFoundError,
+)
 
 from app.domains.shift_assignments.service import (
     DuplicateAssignmentError,
@@ -22,7 +25,6 @@ from app.domains.shift_assignments.service import (
 )
 
 settings = get_settings()
-
 setup_logging()
 logger = logging.getLogger(__name__)
 
@@ -53,11 +55,11 @@ def create_app() -> FastAPI:
     app.include_router(shift_preferences_router)
     app.include_router(shift_assignments_router)
     app.include_router(scheduler_router)
+    app.include_router(exports_router)  # 👈 追加
 
     # -------------------------
     # exception handlers
     # -------------------------
-
     @app.exception_handler(ShiftPreferenceConflictError)
     async def shift_preference_conflict_handler(request: Request, exc: ShiftPreferenceConflictError):
         return JSONResponse(
@@ -94,7 +96,7 @@ def create_app() -> FastAPI:
         )
 
     # -------------------------
-    # startup / shutdown logs
+    # lifecycle
     # -------------------------
     @app.on_event("startup")
     async def startup_event():

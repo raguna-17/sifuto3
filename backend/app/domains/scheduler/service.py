@@ -20,6 +20,7 @@ class SchedulerService:
 
     @staticmethod
     async def generate(db: AsyncSession):
+
         slots, prefs, users = await SchedulerService.load_data(db)
 
         return ShiftSchedulerAlgorithm.generate_schedule(
@@ -30,8 +31,10 @@ class SchedulerService:
 
     @staticmethod
     async def confirm(db: AsyncSession):
+
         result = await SchedulerService.generate(db)
 
+        # ここも軽く安全化
         for slot_id, user_ids in result.items():
             for user_id in user_ids:
                 await ShiftAssignmentService.create(

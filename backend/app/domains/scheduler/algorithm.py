@@ -1,5 +1,6 @@
 import logging
 from collections import defaultdict
+from datetime import timedelta
 
 from app.core.enums import PreferencePriority
 from app.domains.shift_slots.model import ShiftSlot
@@ -23,10 +24,17 @@ class ShiftSchedulerAlgorithm:
 
         result: dict[int, list[int]] = defaultdict(list)
         slot_counts: dict[int, int] = defaultdict(int)
-        user_prefs: dict[int, list[ShiftPreference]] = defaultdict(list)
 
+        # 公平性用
+        user_work_count: dict[int, int] = defaultdict(int)
+
+        # userごとにprefまとめる
+        user_prefs: dict[int, list[ShiftPreference]] = defaultdict(list)
         for pref in prefs:
             user_prefs[pref.user_id].append(pref)
+
+        # slotは時間順（重要）
+        slots = sorted(slots, key=lambda s: s.start_at)
 
         for slot in slots:
 
@@ -34,16 +42,18 @@ class ShiftSchedulerAlgorithm:
 
             for user in users:
 
-                prefs_for_user = user_prefs.get(user.id, [])
-
                 score = ShiftSchedulerAlgorithm._calculate_score(
                     slot=slot,
-                    prefs=prefs_for_user,
+                    prefs=user_prefs.get(user.id, []),
+                    user_work_count=user_work_count[user.id],
                 )
 
-                if score > 0:
-                    candidates.append((user.id, score))
+                if score <= 0:
+                    continue
 
+                candidates.append((user.id, score))
+
+            # スコア降順
             candidates.sort(key=lambda x: x[1], reverse=True)
 
             for user_id, _ in candidates:
@@ -56,6 +66,7 @@ class ShiftSchedulerAlgorithm:
 
                 result[slot.id].append(user_id)
                 slot_counts[slot.id] += 1
+                user_work_count[user_id] += 1
 
         logger.info(
             "schedule generation completed",
@@ -71,29 +82,40 @@ class ShiftSchedulerAlgorithm:
     def _calculate_score(
         slot: ShiftSlot,
         prefs: list[ShiftPreference],
+        user_work_count: int,
     ) -> int:
 
+        score = 0
+
+        # -------------------------
+        # preference score
+        # -------------------------
         target_pref = next(
             (p for p in prefs if p.shift_slot_id == slot.id),
             None,
         )
 
         if target_pref is None:
-            return 0
+            score += 0
+        else:
+            if target_pref.priority == PreferencePriority.UNAVAILABLE:
+                return -999
 
-        if target_pref.priority == PreferencePriority.UNAVAILABLE:
-            return -999
+            if target_pref.priority == PreferencePriority.REQUIRED:
+                score += 100
 
-        if target_pref.priority == PreferencePriority.REQUIRED:
-            return 100
+            elif target_pref.priority == PreferencePriority.PREFERRED:
+                score += 20
 
-        if target_pref.priority == PreferencePriority.PREFERRED:
-            return 10
+            elif target_pref.priority == PreferencePriority.NEUTRAL:
+                score += 5
 
-        if target_pref.priority == PreferencePriority.NEUTRAL:
-            return 1
+            elif target_pref.priority == PreferencePriority.AVOID:
+                score -= 30
 
-        if target_pref.priority == PreferencePriority.AVOID:
-            return -20
+        # -------------------------
+        # fairness penalty
+        # -------------------------
+        score -= user_work_count * 3
 
-        return 0
+        return score
