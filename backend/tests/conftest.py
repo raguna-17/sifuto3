@@ -37,17 +37,14 @@ TestSessionFactory = async_sessionmaker(
 # ==================================================
 # override dependency
 # ==================================================
-'''
+
 async def override_get_db():
     async with TestSessionFactory() as session:
         try:
             yield session
         finally:
             await session.rollback()
-'''
-async def override_get_db():
-    async with TestSessionFactory() as session:
-        yield session
+
 
 # ==================================================
 # API CLIENT FIXTURE
