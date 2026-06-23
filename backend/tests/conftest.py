@@ -11,6 +11,7 @@ from app.main import app
 from app.db.session import get_db
 from app.domains.users.model import User
 from app.core.security import hash_password
+from app.core.enums import UserRole
 from app.core.config import get_settings
 
 
