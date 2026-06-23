@@ -86,6 +86,7 @@ async def test_user():
             email="test@example.com",
             hashed_password=hash_password("password"),
             is_active=True,
+            role=UserRole.ADMIN,  # ←これ重要
         )
 
         session.add(user)

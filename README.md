@@ -27,10 +27,10 @@
 
 ## レイヤー構成：
 
-* API Layer（Router）
-* Service Layer（ビジネスロジック）
-* Domain Model（SQLAlchemy）
-* Scheduler Engine（割り当てアルゴリズム）
+- Service Layer（ユースケース制御）
+- Scheduler Engine（制約付き最適化ロジック）
+- Domain Model（ORM）
+- Export Layer（CSV / Excel 出力）
 
 ## 特徴：
 
@@ -93,25 +93,23 @@
 
 ---
 
-## 🧮 スコア定義
+### スコア定義
 
-
-* REQUIRED : +100
-* PREFERRED : +10
-* NEUTRAL : +1
-* AVOID : -20
-* UNAVAILABLE : -999
+- REQUIRED : +100
+- PREFERRED : +20
+- NEUTRAL : +5
+- AVOID : -30
+- UNAVAILABLE : -999
 
 
 ---
 
-## 🔁 処理フロー
+### 処理フロー
 
-- 全ユーザー・全シフト枠を取得
-- 各ユーザーに対してスコア計算
-- スコア順にソート
-- `required_staff_count` まで割り当て
-- 重複割り当てを防止
+- 全ユーザー・スロット取得
+- スコア計算
+- 降順ソート
+- 割り当て制限適用
 
 ---
 
@@ -154,6 +152,10 @@
 * POST /shift-assignments/bulk/{user_id}
 * GET /shift-assignments/me
 
+### 📤 エクスポート機能
+
+* GET /exports/shifts/csv
+* GET /exports/shifts/excel
 
 ### 🧠 スケジューラ
 
@@ -177,12 +179,13 @@
 
 
 - FastAPI
-- SQLAlchemy (Async)
+- SQLAlchemy (Async ORM / AsyncSession)
 - PostgreSQL
 - Alembic
 - Docker / Docker Compose
 - React（管理UI）
 - Axios
+- httpx（非同期テスト）
 
 
 ---
