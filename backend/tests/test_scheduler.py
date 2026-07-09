@@ -31,16 +31,18 @@ async def test_generate_schedule(client, auth_headers):
 # シフト確定APIテスト
 # ==================================================
 @pytest.mark.asyncio
-async def test_confirm_schedule(client, auth_headers):
+async def test_confirm_schedule(client, auth_headers, test_user):
     """
     シフト確定処理が正常に動作することを確認
     """
 
+    print("test_user.id =", test_user.id)
     payload = {
         "assignments": {
             "1": [1]
         }
     }
+    print("payload=",payload)
 
     res = await client.post(
         "/scheduler/confirm",
