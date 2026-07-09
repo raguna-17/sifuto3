@@ -6,10 +6,11 @@ from sqlalchemy.ext.asyncio import (
     create_async_engine,
 )
 from sqlalchemy.pool import NullPool
-
+from datetime import datetime, timedelta, UTC
 from app.main import app
 from app.db.session import get_db as app_get_db
 from app.domains.users.model import User
+from app.domains.shift_slots.model import ShiftSlot
 from app.core.security import hash_password
 from app.core.enums import UserRole
 from app.core.config import get_settings
@@ -120,3 +121,24 @@ async def auth_headers(client, test_user):
     return {
         "Authorization": f"Bearer {token}"
     }
+
+
+@pytest.fixture
+async def test_slot():
+
+    async with TestSessionFactory() as session:
+
+        slot = ShiftSlot(
+            start_at=datetime.now(UTC),
+            end_at=datetime.now(UTC) + timedelta(hours=8),
+            required_staff_count=1,
+        )
+
+        session.add(slot)
+        await session.commit()
+        await session.refresh(slot)
+
+        yield slot
+
+        await session.delete(slot)
+        await session.commit()
