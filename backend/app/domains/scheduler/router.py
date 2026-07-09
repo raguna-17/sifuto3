@@ -1,43 +1,57 @@
 from fastapi import APIRouter, Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
+from app.core.dependencies import AdminUser
 from app.db.session import get_db
-from app.core.dependencies import AdminUser, CurrentUser
-from app.domains.users.model import User
+from app.domains.scheduler.schema import (
+    SchedulerConfirmRequest,
+    SchedulerResponse,
+)
+from app.domains.scheduler.service import SchedulerService
 
-from .service import SchedulerService
+router = APIRouter(
+    prefix="/scheduler",
+    tags=["scheduler"],
+)
 
-router = APIRouter(prefix="/scheduler", tags=["scheduler"])
 
-
-# ==================================================
-# generate (管理者のみ)
-# ==================================================
-@router.post("/generate")
+# =====================================
+# generate
+# =====================================
+@router.post(
+    "/generate",
+    response_model=SchedulerResponse,
+)
 async def generate_schedule(
-    _: User = Depends(AdminUser),
-    db=Depends(get_db),
+    _: AdminUser,
+    db: AsyncSession = Depends(get_db),
 ):
-
     result = await SchedulerService.generate(db)
 
-    return {
-        "message": "schedule generated",
-        "assignments": result,
-    }
+    return SchedulerResponse(
+        message="schedule generated",
+        assignments=result,
+    )
 
 
-# ==================================================
-# confirm (管理者のみ)
-# ==================================================
-@router.post("/confirm")
+# =====================================
+# confirm
+# =====================================
+@router.post(
+    "/confirm",
+    response_model=SchedulerResponse,
+)
 async def confirm_schedule(
-    _: User = Depends(AdminUser),
-    db=Depends(get_db),
+    request: SchedulerConfirmRequest,
+    _: AdminUser,
+    db: AsyncSession = Depends(get_db),
 ):
+    result = await SchedulerService.confirm(
+        db=db,
+        assignments=request.assignments,
+    )
 
-    result = await SchedulerService.confirm(db)
-
-    return {
-        "status": "ok",
-        "assignments": result,
-    }
+    return SchedulerResponse(
+        message="schedule confirmed",
+        assignments=result,
+    )

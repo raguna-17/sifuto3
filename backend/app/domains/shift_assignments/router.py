@@ -1,22 +1,15 @@
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.core.dependencies import CurrentUser, AdminUser
+from app.core.dependencies import AdminUser, CurrentUser
 from app.db.session import get_db
-
 from app.domains.shift_assignments.schema import (
-    ShiftAssignmentCreate,
-    ShiftAssignmentUpdate,
     ShiftAssignmentResponse,
+    ShiftAssignmentUpdate,
 )
-
 from app.domains.shift_assignments.service import (
-    ShiftAssignmentService,
     ShiftAssignmentNotFoundError,
-    DuplicateAssignmentError,
-    AssignmentCapacityError,
-    ShiftSlotNotFoundError,
-    UserNotFoundError,
+    ShiftAssignmentService,
 )
 
 router = APIRouter(
@@ -24,70 +17,14 @@ router = APIRouter(
     tags=["shift-assignments"],
 )
 
-# =========================
-# create (USER)
-# =========================
-@router.post("", response_model=ShiftAssignmentResponse)
-async def create_assignment(
-    assignment_in: ShiftAssignmentCreate,
-    current_user: CurrentUser,
-    db: AsyncSession = Depends(get_db),
-):
-    try:
-        return await ShiftAssignmentService.create(
-            db=db,
-            user_id=current_user.id,
-            slot_id=assignment_in.slot_id,
-            is_auto=True,
-        )
-
-    except (ShiftSlotNotFoundError, UserNotFoundError):
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="User or Slot not found",
-        )
-
-    except DuplicateAssignmentError:
-        raise HTTPException(
-            status_code=status.HTTP_409_CONFLICT,
-            detail="Duplicate assignment",
-        )
-
-    except AssignmentCapacityError:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Slot capacity exceeded",
-        )
-
 
 # =========================
-# bulk create (ADMIN ONLY)
+# get all (ADMIN)
 # =========================
-@router.post("/bulk/{user_id}")
-async def bulk_create(
-    user_id: int,
-    payload: list[ShiftAssignmentCreate],
-    _: AdminUser,
-    db: AsyncSession = Depends(get_db),
-):
-    try:
-        return await ShiftAssignmentService.bulk_create(
-            db=db,
-            user_id=user_id,
-            slot_ids=[p.slot_id for p in payload],
-        )
-
-    except Exception as e:
-        raise HTTPException(
-            status_code=400,
-            detail=str(e),
-        )
-
-
-# =========================
-# get all (ADMIN ONLY)
-# =========================
-@router.get("", response_model=list[ShiftAssignmentResponse])
+@router.get(
+    "",
+    response_model=list[ShiftAssignmentResponse],
+)
 async def get_all_assignments(
     _: AdminUser,
     db: AsyncSession = Depends(get_db),
@@ -98,7 +35,10 @@ async def get_all_assignments(
 # =========================
 # get my assignments
 # =========================
-@router.get("/me", response_model=list[ShiftAssignmentResponse])
+@router.get(
+    "/me",
+    response_model=list[ShiftAssignmentResponse],
+)
 async def get_my_assignments(
     current_user: CurrentUser,
     db: AsyncSession = Depends(get_db),
@@ -110,9 +50,12 @@ async def get_my_assignments(
 
 
 # =========================
-# get by id (ADMIN ONLY)
+# get by id (ADMIN)
 # =========================
-@router.get("/{assignment_id}", response_model=ShiftAssignmentResponse)
+@router.get(
+    "/{assignment_id}",
+    response_model=ShiftAssignmentResponse,
+)
 async def get_assignment(
     assignment_id: int,
     _: AdminUser,
@@ -123,6 +66,7 @@ async def get_assignment(
             db=db,
             assignment_id=assignment_id,
         )
+
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -131,9 +75,12 @@ async def get_assignment(
 
 
 # =========================
-# update (ADMIN ONLY)
+# update (ADMIN)
 # =========================
-@router.patch("/{assignment_id}", response_model=ShiftAssignmentResponse)
+@router.patch(
+    "/{assignment_id}",
+    response_model=ShiftAssignmentResponse,
+)
 async def update_assignment(
     assignment_id: int,
     assignment_in: ShiftAssignmentUpdate,
@@ -146,6 +93,7 @@ async def update_assignment(
             assignment_id=assignment_id,
             assignment_in=assignment_in,
         )
+
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -154,9 +102,12 @@ async def update_assignment(
 
 
 # =========================
-# delete (ADMIN ONLY)
+# delete (ADMIN)
 # =========================
-@router.delete("/{assignment_id}", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete(
+    "/{assignment_id}",
+    status_code=status.HTTP_204_NO_CONTENT,
+)
 async def delete_assignment(
     assignment_id: int,
     _: AdminUser,
@@ -167,6 +118,7 @@ async def delete_assignment(
             db=db,
             assignment_id=assignment_id,
         )
+
     except ShiftAssignmentNotFoundError:
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,

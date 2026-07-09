@@ -2,14 +2,7 @@ from pydantic import BaseModel, ConfigDict
 
 
 # =========================
-# create
-# =========================
-class ShiftAssignmentCreate(BaseModel):
-    slot_id: int
-
-
-# =========================
-# update (admin only想定)
+# update
 # =========================
 class ShiftAssignmentUpdate(BaseModel):
     is_confirmed: bool | None = None

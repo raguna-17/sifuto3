@@ -1,11 +1,10 @@
-from sqlalchemy import select, func
-from sqlalchemy.ext.asyncio import AsyncSession
+from sqlalchemy import func, select
 from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.domains.users.model import User
-from app.domains.shift_slots.model import ShiftSlot
 from app.domains.shift_assignments.model import ShiftAssignment
-from app.domains.shift_assignments.schema import ShiftAssignmentCreate
+from app.domains.shift_slots.model import ShiftSlot
+from app.domains.users.model import User
 
 
 # =========================
@@ -55,15 +54,14 @@ class ShiftAssignmentService:
         if slot is None:
             raise ShiftSlotNotFoundError()
 
-        # =========================
-        # 1. 重複チェック（軽く残す）
-        # =========================
+        # 重複チェック
         existing = await db.scalar(
             select(ShiftAssignment).where(
                 ShiftAssignment.user_id == user_id,
                 ShiftAssignment.slot_id == slot_id,
             )
         )
+
         if existing:
             raise DuplicateAssignmentError()
 
@@ -71,16 +69,16 @@ class ShiftAssignmentService:
             user_id=user_id,
             slot_id=slot_id,
             is_auto=is_auto,
-            is_confirmed=False,
+            is_confirmed=True,
         )
 
-        try:
-            db.add(assignment)
-            await db.flush()  # ←重要（ここでDB制約チェックさせる）
+        db.add(assignment)
 
-            # =========================
-            # 2. capacityチェックは「再計算」する
-            # =========================
+        try:
+            # DB制約チェック
+            await db.flush()
+
+            # 定員チェック
             current_count = await db.scalar(
                 select(func.count(ShiftAssignment.id)).where(
                     ShiftAssignment.slot_id == slot_id
@@ -88,64 +86,13 @@ class ShiftAssignmentService:
             ) or 0
 
             if current_count > slot.required_staff_count:
-                await db.rollback()
                 raise AssignmentCapacityError()
 
-            await db.commit()
-            await db.refresh(assignment)
             return assignment
 
         except IntegrityError:
-            await db.rollback()
             raise DuplicateAssignmentError()
 
-        except Exception:
-            await db.rollback()
-            raise
-    
-
-    @staticmethod
-    async def bulk_create(
-        db: AsyncSession,
-        user_id: int,
-        slot_ids: list[int],
-    ) -> list[ShiftAssignment]:
-
-        results = []
-
-        try:
-            for slot_id in slot_ids:
-
-                existing = await db.scalar(
-                    select(ShiftAssignment).where(
-                        ShiftAssignment.user_id == user_id,
-                        ShiftAssignment.slot_id == slot_id,
-                    )
-                )
-
-                if existing:
-                    continue
-
-                assignment = ShiftAssignment(
-                    user_id=user_id,
-                    slot_id=slot_id,
-                    is_auto=True,
-                    is_confirmed=False,
-                )
-
-                db.add(assignment)
-                results.append(assignment)
-
-            await db.commit()
-
-            for r in results:
-                await db.refresh(r)
-
-            return results
-
-        except Exception as e:
-            await db.rollback()
-            raise e
     # =========================
     # get all
     # =========================
@@ -154,7 +101,10 @@ class ShiftAssignmentService:
         db: AsyncSession,
     ) -> list[ShiftAssignment]:
 
-        result = await db.scalars(select(ShiftAssignment))
+        result = await db.scalars(
+            select(ShiftAssignment)
+        )
+
         return result.all()
 
     # =========================
@@ -166,7 +116,10 @@ class ShiftAssignmentService:
         assignment_id: int,
     ) -> ShiftAssignment:
 
-        assignment = await db.get(ShiftAssignment, assignment_id)
+        assignment = await db.get(
+            ShiftAssignment,
+            assignment_id,
+        )
 
         if assignment is None:
             raise ShiftAssignmentNotFoundError()
@@ -187,6 +140,7 @@ class ShiftAssignmentService:
                 ShiftAssignment.user_id == user_id
             )
         )
+
         return result.all()
 
     # =========================
@@ -203,6 +157,7 @@ class ShiftAssignmentService:
                 ShiftAssignment.slot_id == slot_id
             )
         )
+
         return result.all()
 
     # =========================
@@ -220,20 +175,17 @@ class ShiftAssignmentService:
             assignment_id=assignment_id,
         )
 
-        update_data = assignment_in.model_dump(exclude_unset=True)
+        update_data = assignment_in.model_dump(
+            exclude_unset=True
+        )
 
-        # adminが確定するケース想定
         if "is_confirmed" in update_data:
             assignment.is_confirmed = update_data["is_confirmed"]
 
-        try:
-            await db.commit()
-            await db.refresh(assignment)
-            return assignment
+        await db.commit()
+        await db.refresh(assignment)
 
-        except Exception:
-            await db.rollback()
-            raise
+        return assignment
 
     # =========================
     # delete
@@ -249,10 +201,5 @@ class ShiftAssignmentService:
             assignment_id=assignment_id,
         )
 
-        try:
-            await db.delete(assignment)
-            await db.commit()
-
-        except Exception:
-            await db.rollback()
-            raise
+        await db.delete(assignment)
+        await db.commit()

@@ -4,12 +4,11 @@ import axios from "../../lib/axios";
 export const generateShiftFlow = () =>
     axios.post("/scheduler/generate");
 
-export const saveShiftAssignments = (userId, slotIds) =>
-    axios.post(`/shift-assignments/bulk/${userId}`,
-        slotIds.map((slotId) => ({
-            slot_id: slotId,
-        }))
-    );
+// シフト確定
+export const confirmShiftFlow = (assignments) =>
+    axios.post("/scheduler/confirm", {
+        assignments,
+    });
 
 // 一覧
 export const getShiftAssignments = () =>

@@ -1,7 +1,7 @@
 import { useState } from "react";
 import {
     generateShiftFlow,
-    saveShiftAssignments,
+    confirmShiftFlow,
 } from "./api";
 
 import { getUsers } from "../users/api";
@@ -102,30 +102,15 @@ const ShiftFlowCreatePage = () => {
     const handleSave = async () => {
         if (!result) return;
 
-        // slotごとのuserIdsをフラットにするのではなく
-        // user単位にまとめる必要がある
+        const validationError = validateAssignments();
 
-        const userMap = {};
-
-        Object.entries(result).forEach(([slotId, userIds]) => {
-            userIds.forEach((userId) => {
-                if (!userMap[userId]) {
-                    userMap[userId] = [];
-                }
-                userMap[userId].push(Number(slotId));
-            });
-        });
+        if (validationError) {
+            alert(validationError);
+            return;
+        }
 
         try {
-            await Promise.all(
-                Object.entries(userMap).map(
-                    ([userId, slotIds]) =>
-                        saveShiftAssignments(
-                            Number(userId),
-                            slotIds
-                        )
-                )
-            );
+            await confirmShiftFlow(result);
 
             alert("確定しました");
         } catch (error) {
