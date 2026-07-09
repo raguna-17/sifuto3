@@ -20,8 +20,11 @@ async def test_generate_schedule(client, auth_headers):
 
     data = res.json()
 
-    # 返り値は dict[int, list[int]] 想定
+    # SchedulerResponse形式
     assert isinstance(data, dict)
+    assert "message" in data
+    assert "assignments" in data
+    assert isinstance(data["assignments"], dict)
 
 
 # ==================================================
@@ -33,16 +36,27 @@ async def test_confirm_schedule(client, auth_headers):
     シフト確定処理が正常に動作することを確認
     """
 
+    payload = {
+        "assignments": {
+            "1": [1]
+        }
+    }
+
     res = await client.post(
         "/scheduler/confirm",
         headers=auth_headers,
+        json=payload,
     )
+
+    print(res.text)
 
     assert res.status_code == 200
 
     data = res.json()
 
     assert isinstance(data, dict)
+    assert "message" in data
+    assert "assignments" in data
 
 
 # ==================================================
@@ -63,10 +77,12 @@ async def test_schedule_structure(client, auth_headers):
 
     data = res.json()
 
-    # dict構造チェック
     assert isinstance(data, dict)
+    assert "assignments" in data
 
-    # 各slot -> list[user_id]
-    for slot_id, user_ids in data.items():
+    assignments = data["assignments"]
+
+    # slot -> list[user_id]
+    for slot_id, user_ids in assignments.items():
         assert isinstance(slot_id, str) or isinstance(slot_id, int)
         assert isinstance(user_ids, list)
