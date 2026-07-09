@@ -2,5 +2,6 @@
 show_missing = True
 precision = 1
 omit =
-    app/modules/cart/*
-    
+    alembic/*
+    app/main.py
+    app/domains/*/router.py
