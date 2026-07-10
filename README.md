@@ -149,7 +149,6 @@
 ### 👤 割り当て
 
 * GET /shift-assignments
-* POST /shift-assignments/bulk/{user_id}
 * GET /shift-assignments/me
 
 ### 📤 エクスポート機能
@@ -187,6 +186,35 @@
 - Axios
 - httpx（非同期テスト）
 
+
+---
+
+
+## ✅ テスト
+
+バックエンドでは `pytest` による自動テストを実装しています。
+
+### テスト対象
+
+- ユーザー管理
+- シフト枠管理
+- シフト希望管理
+- スケジューラ
+
+### 使用ライブラリ
+
+- pytest
+- pytest-asyncio
+- pytest-cov
+- httpx（AsyncClient）
+
+### テスト結果
+
+- テスト数：25件
+- 成功：25 Passed
+- 総合コードカバレッジ：70.5%
+
+今後は、シフト割り当て機能や異常系テストを追加し、さらなる品質向上を予定しています。
 
 ---
 
