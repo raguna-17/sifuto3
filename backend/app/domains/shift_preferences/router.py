@@ -11,7 +11,7 @@ from app.core.dependencies import (
     CurrentUser,
     AdminUser,
 )
-
+from app.core.enums import UserRole
 from app.db.session import get_db
 
 from app.domains.shift_preferences.schema import (
