@@ -2,4 +2,4 @@
 show_missing = True
 precision = 1
 omit =
-    app/domains/exports
+    app/domains/exports/*
