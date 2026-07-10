@@ -2,4 +2,4 @@
 show_missing = True
 precision = 1
 omit =
-    app/domains/*/router.py
+    app/domains/exports
